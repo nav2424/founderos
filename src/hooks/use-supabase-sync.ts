@@ -2,6 +2,10 @@
 
 import { useEffect } from "react";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import {
+  countItems,
+  pushAllLocalToSupabase,
+} from "@/lib/supabase/data-sync";
 import { useFounderStore } from "@/store/use-founder-store";
 import type {
   Brand,
@@ -20,7 +24,10 @@ export function useSupabaseSync() {
   const hydrated = useFounderStore((s) => s.hydrated);
 
   useEffect(() => {
-    if (!isSupabaseConfigured()) return;
+    if (!isSupabaseConfigured()) {
+      useFounderStore.setState({ hydrated: true });
+      return;
+    }
 
     const supabase = createClient();
 
@@ -28,7 +35,10 @@ export function useSupabaseSync() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        useFounderStore.setState({ hydrated: true });
+        return;
+      }
 
       setUserId(user.id);
 
@@ -44,7 +54,7 @@ export function useSupabaseSync() {
           supabase.from("weekly_reviews").select("*"),
         ]);
 
-      hydrateFromSupabase({
+      const remote = {
         brands: (brands.data ?? []) as Brand[],
         tasks: (tasks.data ?? []) as Task[],
         goals: (goals.data ?? []) as Goal[],
@@ -53,9 +63,35 @@ export function useSupabaseSync() {
         reminders: (reminders.data ?? []) as Reminder[],
         playbooks: (playbooks.data ?? []) as Playbook[],
         weeklyReviews: (reviews.data ?? []) as WeeklyReview[],
-      });
+      };
+
+      const remoteCount = countItems(remote);
+      const local = useFounderStore.getState();
+      const localCount = countItems(local);
+
+      if (remoteCount > 0) {
+        hydrateFromSupabase(remote);
+      } else if (localCount > 0) {
+        await pushAllLocalToSupabase(user.id, local);
+        useFounderStore.setState({ hydrated: true });
+      } else {
+        useFounderStore.setState({ hydrated: true });
+      }
     }
 
-    if (!hydrated) load();
-  }, [hydrateFromSupabase, setUserId, hydrated]);
+    function startSync() {
+      if (useFounderStore.getState().hydrated) return;
+      void load();
+    }
+
+    if (useFounderStore.persist.hasHydrated()) {
+      startSync();
+    }
+
+    const unsub = useFounderStore.persist.onFinishHydration(() => {
+      startSync();
+    });
+
+    return unsub;
+  }, [hydrateFromSupabase, setUserId]);
 }

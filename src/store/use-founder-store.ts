@@ -13,6 +13,7 @@ import type {
   Task,
   WeeklyReview,
 } from "@/lib/types";
+import { founderSync } from "@/lib/supabase/data-sync";
 import { generateId, priorityScore } from "@/lib/utils";
 
 interface FounderState {
@@ -80,7 +81,7 @@ export const useFounderStore = create<FounderState>()(
           hydrated: true,
         }),
 
-      clearAllData: () => set({ ...EMPTY_FOUNDER_DATA }),
+      clearAllData: () => set({ ...EMPTY_FOUNDER_DATA, hydrated: true }),
 
       addBrand: (brand) => {
         const newBrand: Brand = {
@@ -89,15 +90,20 @@ export const useFounderStore = create<FounderState>()(
           created_at: new Date().toISOString(),
         };
         set((s) => ({ brands: [...s.brands, newBrand] }));
+        founderSync.brand.upsert(newBrand, get().userId);
         return newBrand;
       },
 
-      updateBrand: (id, updates) =>
+      updateBrand: (id, updates) => {
         set((s) => ({
           brands: s.brands.map((b) => (b.id === id ? { ...b, ...updates } : b)),
-        })),
+        }));
+        const updated = get().brands.find((b) => b.id === id);
+        if (updated) founderSync.brand.upsert(updated, get().userId);
+      },
 
-      deleteBrand: (id) =>
+      deleteBrand: (id) => {
+        const userId = get().userId;
         set((s) => ({
           brands: s.brands.filter((b) => b.id !== id),
           tasks: s.tasks.filter((t) => t.brand_id !== id),
@@ -106,7 +112,9 @@ export const useFounderStore = create<FounderState>()(
           kpis: s.kpis.filter((k) => k.brand_id !== id),
           reminders: s.reminders.filter((r) => r.brand_id !== id),
           playbooks: s.playbooks.filter((p) => p.brand_id !== id),
-        })),
+        }));
+        founderSync.brand.delete(id, userId);
+      },
 
       addTask: (task) => {
         const newTask: Task = {
@@ -116,18 +124,25 @@ export const useFounderStore = create<FounderState>()(
           completed_at: null,
         };
         set((s) => ({ tasks: [...s.tasks, newTask] }));
+        founderSync.task.upsert(newTask, get().userId);
         return newTask;
       },
 
-      updateTask: (id, updates) =>
+      updateTask: (id, updates) => {
         set((s) => ({
           tasks: s.tasks.map((t) => (t.id === id ? { ...t, ...updates } : t)),
-        })),
+        }));
+        const updated = get().tasks.find((t) => t.id === id);
+        if (updated) founderSync.task.upsert(updated, get().userId);
+      },
 
-      deleteTask: (id) =>
-        set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) })),
+      deleteTask: (id) => {
+        const userId = get().userId;
+        set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) }));
+        founderSync.task.delete(id, userId);
+      },
 
-      completeTask: (id) =>
+      completeTask: (id) => {
         set((s) => ({
           tasks: s.tasks.map((t) =>
             t.id === id
@@ -138,7 +153,10 @@ export const useFounderStore = create<FounderState>()(
                 }
               : t
           ),
-        })),
+        }));
+        const updated = get().tasks.find((t) => t.id === id);
+        if (updated) founderSync.task.upsert(updated, get().userId);
+      },
 
       addGoal: (goal) => {
         const newGoal: Goal = {
@@ -147,16 +165,23 @@ export const useFounderStore = create<FounderState>()(
           created_at: new Date().toISOString(),
         };
         set((s) => ({ goals: [...s.goals, newGoal] }));
+        founderSync.goal.upsert(newGoal, get().userId);
         return newGoal;
       },
 
-      updateGoal: (id, updates) =>
+      updateGoal: (id, updates) => {
         set((s) => ({
           goals: s.goals.map((g) => (g.id === id ? { ...g, ...updates } : g)),
-        })),
+        }));
+        const updated = get().goals.find((g) => g.id === id);
+        if (updated) founderSync.goal.upsert(updated, get().userId);
+      },
 
-      deleteGoal: (id) =>
-        set((s) => ({ goals: s.goals.filter((g) => g.id !== id) })),
+      deleteGoal: (id) => {
+        const userId = get().userId;
+        set((s) => ({ goals: s.goals.filter((g) => g.id !== id) }));
+        founderSync.goal.delete(id, userId);
+      },
 
       addIdea: (idea) => {
         const newIdea: Idea = {
@@ -165,16 +190,23 @@ export const useFounderStore = create<FounderState>()(
           created_at: new Date().toISOString(),
         };
         set((s) => ({ ideas: [...s.ideas, newIdea] }));
+        founderSync.idea.upsert(newIdea, get().userId);
         return newIdea;
       },
 
-      updateIdea: (id, updates) =>
+      updateIdea: (id, updates) => {
         set((s) => ({
           ideas: s.ideas.map((i) => (i.id === id ? { ...i, ...updates } : i)),
-        })),
+        }));
+        const updated = get().ideas.find((i) => i.id === id);
+        if (updated) founderSync.idea.upsert(updated, get().userId);
+      },
 
-      deleteIdea: (id) =>
-        set((s) => ({ ideas: s.ideas.filter((i) => i.id !== id) })),
+      deleteIdea: (id) => {
+        const userId = get().userId;
+        set((s) => ({ ideas: s.ideas.filter((i) => i.id !== id) }));
+        founderSync.idea.delete(id, userId);
+      },
 
       convertIdeaToTask: (ideaId) => {
         const idea = get().ideas.find((i) => i.id === ideaId);
@@ -198,39 +230,56 @@ export const useFounderStore = create<FounderState>()(
       addKpi: (kpi) => {
         const newKpi: Kpi = { ...kpi, id: generateId() };
         set((s) => ({ kpis: [...s.kpis, newKpi] }));
+        founderSync.kpi.upsert(newKpi, get().userId);
         return newKpi;
       },
 
-      updateKpi: (id, updates) =>
+      updateKpi: (id, updates) => {
         set((s) => ({
           kpis: s.kpis.map((k) => (k.id === id ? { ...k, ...updates } : k)),
-        })),
+        }));
+        const updated = get().kpis.find((k) => k.id === id);
+        if (updated) founderSync.kpi.upsert(updated, get().userId);
+      },
 
-      deleteKpi: (id) =>
-        set((s) => ({ kpis: s.kpis.filter((k) => k.id !== id) })),
+      deleteKpi: (id) => {
+        const userId = get().userId;
+        set((s) => ({ kpis: s.kpis.filter((k) => k.id !== id) }));
+        founderSync.kpi.delete(id, userId);
+      },
 
       addReminder: (reminder) => {
         const newReminder: Reminder = { ...reminder, id: generateId() };
         set((s) => ({ reminders: [...s.reminders, newReminder] }));
+        founderSync.reminder.upsert(newReminder, get().userId);
         return newReminder;
       },
 
-      updateReminder: (id, updates) =>
+      updateReminder: (id, updates) => {
         set((s) => ({
           reminders: s.reminders.map((r) =>
             r.id === id ? { ...r, ...updates } : r
           ),
-        })),
+        }));
+        const updated = get().reminders.find((r) => r.id === id);
+        if (updated) founderSync.reminder.upsert(updated, get().userId);
+      },
 
-      deleteReminder: (id) =>
-        set((s) => ({ reminders: s.reminders.filter((r) => r.id !== id) })),
+      deleteReminder: (id) => {
+        const userId = get().userId;
+        set((s) => ({ reminders: s.reminders.filter((r) => r.id !== id) }));
+        founderSync.reminder.delete(id, userId);
+      },
 
-      completeReminder: (id) =>
+      completeReminder: (id) => {
         set((s) => ({
           reminders: s.reminders.map((r) =>
             r.id === id ? { ...r, completed: true } : r
           ),
-        })),
+        }));
+        const updated = get().reminders.find((r) => r.id === id);
+        if (updated) founderSync.reminder.upsert(updated, get().userId);
+      },
 
       addPlaybook: (pb) => {
         const now = new Date().toISOString();
@@ -241,20 +290,27 @@ export const useFounderStore = create<FounderState>()(
           updated_at: now,
         };
         set((s) => ({ playbooks: [...s.playbooks, newPb] }));
+        founderSync.playbook.upsert(newPb, get().userId);
         return newPb;
       },
 
-      updatePlaybook: (id, updates) =>
+      updatePlaybook: (id, updates) => {
         set((s) => ({
           playbooks: s.playbooks.map((p) =>
             p.id === id
               ? { ...p, ...updates, updated_at: new Date().toISOString() }
               : p
           ),
-        })),
+        }));
+        const updated = get().playbooks.find((p) => p.id === id);
+        if (updated) founderSync.playbook.upsert(updated, get().userId);
+      },
 
-      deletePlaybook: (id) =>
-        set((s) => ({ playbooks: s.playbooks.filter((p) => p.id !== id) })),
+      deletePlaybook: (id) => {
+        const userId = get().userId;
+        set((s) => ({ playbooks: s.playbooks.filter((p) => p.id !== id) }));
+        founderSync.playbook.delete(id, userId);
+      },
 
       addWeeklyReview: (review) => {
         const newReview: WeeklyReview = {
@@ -263,6 +319,7 @@ export const useFounderStore = create<FounderState>()(
           created_at: new Date().toISOString(),
         };
         set((s) => ({ weeklyReviews: [newReview, ...s.weeklyReviews] }));
+        founderSync.weeklyReview.upsert(newReview, get().userId);
         return newReview;
       },
     }),
