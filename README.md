@@ -7,7 +7,7 @@ Manage multiple brands, goals, tasks, reminders, ideas, KPIs, and weekly executi
 ## Features
 
 - **Dashboard** — Top priorities, overdue tasks, reminders, brand cards, goals, KPIs, quick capture
-- **Brands** — Multi-brand portfolio with Natural Scents pre-seeded
+- **Brands** — Multi-brand portfolio — start empty, add your own
 - **Tasks** — Kanban + table, filters, impact/effort priority scoring
 - **Goals** — Yearly → weekly with progress bars
 - **Ideas** — Inbox, categories, convert to task, archive
@@ -52,8 +52,6 @@ npm run dev
 
 1. Go to [supabase.com](https://supabase.com) and create a project
 2. Copy **Project URL** and **anon key** from Settings → API
-3. Copy **service_role key** (for seeding only — never expose client-side)
-
 ### 2. Run the database schema
 
 In the Supabase SQL Editor, run the contents of:
@@ -73,7 +71,6 @@ Edit `.env.local`:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
@@ -81,15 +78,11 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 In Supabase → Authentication → Providers, enable **Email**.
 
-### 5. Sign up & seed
+### 5. Sign up and add your data
 
 1. Start the app: `npm run dev`
 2. Sign up at `/signup`
-3. Seed sample data:
-
-```bash
-SEED_USER_EMAIL=your@email.com npm run seed
-```
+3. Add brands, tasks, goals, and KPIs from the app — no sample data is pre-loaded
 
 ## Project Structure
 
@@ -110,12 +103,10 @@ src/
     (auth)/         # Login & signup
   components/       # UI + layout + feature components
   hooks/
-  lib/              # Types, utils, Supabase, seed data
+  lib/              # Types, utils, Supabase
   store/            # Zustand store
 supabase/
   schema.sql
-scripts/
-  seed.ts
 ```
 
 ## Keyboard Shortcuts
@@ -130,20 +121,6 @@ scripts/
 
 Tasks and ideas use **Impact ÷ Effort** (each 1–5). Higher scores surface first as high-leverage work.
 
-## Natural Scents Defaults
-
-Pre-loaded brand with categories:
-
-- Creator Partnerships
-- Wholesale
-- Content
-- Operations
-- Customer Experience
-- Finance
-- Strategy
-
-Sample goals, tasks, ideas, and KPIs are included in local seed data and via `npm run seed` for Supabase.
-
 ## Scripts
 
 | Command | Description |
@@ -151,7 +128,6 @@ Sample goals, tasks, ideas, and KPIs are included in local seed data and via `np
 | `npm run dev` | Development server |
 | `npm run build` | Production build |
 | `npm run start` | Production server |
-| `npm run seed` | Seed Supabase for `SEED_USER_EMAIL` |
 
 ## Deploy on Netlify (access from any device)
 
@@ -187,8 +163,6 @@ Ensure `.env.local` is **not** committed (it’s in `.gitignore`).
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase **anon** key (public) |
 | `NEXT_PUBLIC_APP_URL` | Your Netlify URL, e.g. `https://founderos.netlify.app` |
 
-Do **not** add `SUPABASE_SERVICE_ROLE_KEY` to Netlify unless you have a specific server-only use case. Run `npm run seed` locally instead.
-
 Redeploy after saving variables (**Deploys → Trigger deploy**).
 
 ### 4. Configure Supabase Auth for production
@@ -200,17 +174,7 @@ In [Supabase Dashboard](https://supabase.com/dashboard) → **Authentication** �
   - `https://YOUR-SITE.netlify.app/**`
   - `http://localhost:3000/**` (optional, for local dev)
 
-### 5. Seed data (one time, local)
-
-From your machine (with `.env.local`):
-
-```bash
-SEED_USER_EMAIL=your@email.com npm run seed
-```
-
-Sign up on the live Netlify URL with that email first, then run the seed.
-
-### 6. Use on any device
+### 5. Use on any device
 
 Open your Netlify URL on phone, tablet, or laptop — same login, data synced via Supabase.
 

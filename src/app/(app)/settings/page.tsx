@@ -9,7 +9,7 @@ import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const resetToSeed = useFounderStore((s) => s.resetToSeed);
+  const clearAllData = useFounderStore((s) => s.clearAllData);
   const supabaseReady = isSupabaseConfigured();
 
   async function handleSignOut() {
@@ -18,6 +18,17 @@ export default function SettingsPage() {
       await supabase.auth.signOut();
     }
     router.push("/login");
+  }
+
+  function handleClearData() {
+    if (
+      !confirm(
+        "Clear all brands, tasks, goals, and other data from this browser? This cannot be undone."
+      )
+    ) {
+      return;
+    }
+    clearAllData();
   }
 
   return (
@@ -42,11 +53,11 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-sm text-zinc-400">
-              Reset local data to Natural Scents sample seed (does not affect
-              Supabase if synced).
+              Remove all local data so you can start fresh with your own brands,
+              tasks, and goals.
             </p>
-            <Button variant="outline" onClick={resetToSeed}>
-              Reset to sample data
+            <Button variant="outline" onClick={handleClearData}>
+              Clear all local data
             </Button>
           </CardContent>
         </Card>

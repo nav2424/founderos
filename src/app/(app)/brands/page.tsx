@@ -15,8 +15,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useFounderStore } from "@/store/use-founder-store";
-import { NATURAL_SCENTS_CATEGORIES } from "@/lib/constants";
-
 export default function BrandsPage() {
   const brands = useFounderStore((s) => s.brands);
   const tasks = useFounderStore((s) => s.tasks);
@@ -88,10 +86,6 @@ export default function BrandsPage() {
                 className="mt-1.5"
               />
             </div>
-            <p className="text-xs text-zinc-500">
-              Tip: Natural Scents uses categories:{" "}
-              {NATURAL_SCENTS_CATEGORIES.slice(0, 3).join(", ")}…
-            </p>
             <Button type="submit" className="w-full">
               Create Brand
             </Button>

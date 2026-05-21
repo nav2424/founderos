@@ -1,13 +1,3 @@
-export const NATURAL_SCENTS_CATEGORIES = [
-  "Creator Partnerships",
-  "Wholesale",
-  "Content",
-  "Operations",
-  "Customer Experience",
-  "Finance",
-  "Strategy",
-];
-
 export const TASK_STATUSES = [
   "Inbox",
   "To Do",

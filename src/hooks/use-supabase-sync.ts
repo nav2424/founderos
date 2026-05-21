@@ -44,18 +44,16 @@ export function useSupabaseSync() {
           supabase.from("weekly_reviews").select("*"),
         ]);
 
-      if (brands.data && brands.data.length > 0) {
-        hydrateFromSupabase({
-          brands: brands.data as Brand[],
-          tasks: (tasks.data ?? []) as Task[],
-          goals: (goals.data ?? []) as Goal[],
-          ideas: (ideas.data ?? []) as Idea[],
-          kpis: (kpis.data ?? []) as Kpi[],
-          reminders: (reminders.data ?? []) as Reminder[],
-          playbooks: (playbooks.data ?? []) as Playbook[],
-          weeklyReviews: (reviews.data ?? []) as WeeklyReview[],
-        });
-      }
+      hydrateFromSupabase({
+        brands: (brands.data ?? []) as Brand[],
+        tasks: (tasks.data ?? []) as Task[],
+        goals: (goals.data ?? []) as Goal[],
+        ideas: (ideas.data ?? []) as Idea[],
+        kpis: (kpis.data ?? []) as Kpi[],
+        reminders: (reminders.data ?? []) as Reminder[],
+        playbooks: (playbooks.data ?? []) as Playbook[],
+        weeklyReviews: (reviews.data ?? []) as WeeklyReview[],
+      });
     }
 
     if (!hydrated) load();

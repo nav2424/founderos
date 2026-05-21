@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { getSeedData } from "@/lib/seed-data";
+import { EMPTY_FOUNDER_DATA } from "@/lib/empty-state";
 import type {
   Brand,
   Goal,
@@ -29,7 +29,7 @@ interface FounderState {
 
   setUserId: (id: string | null) => void;
   hydrateFromSupabase: (data: Partial<FounderState>) => void;
-  resetToSeed: () => void;
+  clearAllData: () => void;
 
   addBrand: (brand: Omit<Brand, "id" | "created_at">) => Brand;
   updateBrand: (id: string, updates: Partial<Brand>) => void;
@@ -65,19 +65,10 @@ interface FounderState {
   addWeeklyReview: (review: Omit<WeeklyReview, "id" | "created_at">) => WeeklyReview;
 }
 
-const seed = getSeedData();
-
 export const useFounderStore = create<FounderState>()(
   persist(
     (set, get) => ({
-      brands: seed.brands,
-      tasks: seed.tasks,
-      goals: seed.goals,
-      ideas: seed.ideas,
-      kpis: seed.kpis,
-      reminders: seed.reminders,
-      playbooks: seed.playbooks,
-      weeklyReviews: seed.weeklyReviews,
+      ...EMPTY_FOUNDER_DATA,
       hydrated: false,
       userId: null,
 
@@ -89,19 +80,7 @@ export const useFounderStore = create<FounderState>()(
           hydrated: true,
         }),
 
-      resetToSeed: () => {
-        const s = getSeedData();
-        set({
-          brands: s.brands,
-          tasks: s.tasks,
-          goals: s.goals,
-          ideas: s.ideas,
-          kpis: s.kpis,
-          reminders: s.reminders,
-          playbooks: s.playbooks,
-          weeklyReviews: s.weeklyReviews,
-        });
-      },
+      clearAllData: () => set({ ...EMPTY_FOUNDER_DATA }),
 
       addBrand: (brand) => {
         const newBrand: Brand = {
@@ -288,7 +267,7 @@ export const useFounderStore = create<FounderState>()(
       },
     }),
     {
-      name: "founderos-storage",
+      name: "founderos-v2",
       partialize: (state) => ({
         brands: state.brands,
         tasks: state.tasks,

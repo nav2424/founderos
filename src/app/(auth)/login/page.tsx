@@ -62,8 +62,8 @@ export default function LoginPage() {
         >
           {!isSupabaseConfigured() && (
             <p className="text-xs text-amber-400/90 bg-amber-500/10 rounded-lg p-3">
-              Supabase not configured — continuing in local mode with sample
-              data.
+              Supabase not configured — continuing in local mode. Add your own
+              data after signing in.
             </p>
           )}
           <div>

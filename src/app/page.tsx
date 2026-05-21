@@ -54,8 +54,8 @@ export default async function HomePage() {
           </h1>
           <p className="mt-4 text-lg text-zinc-400 leading-relaxed">
             FounderOS is a web-based operating system for managing goals, tasks,
-            KPIs, ideas, reminders, and weekly reviews across Natural Scents and
-            your other brands — no install required.
+            KPIs, ideas, reminders, and weekly reviews across all your brands —
+            no install required.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/signup">
@@ -81,7 +81,7 @@ export default async function HomePage() {
             {
               icon: Target,
               title: "Goals & KPIs",
-              desc: "Track revenue, creators, wholesale, content",
+              desc: "Track revenue, growth metrics, and what matters",
             },
             {
               icon: BarChart3,

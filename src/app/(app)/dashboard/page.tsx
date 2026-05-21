@@ -230,20 +230,30 @@ export default function DashboardPage() {
             </Button>
           </Link>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {brands.map((brand) => (
-            <BrandCard
-              key={brand.id}
-              brand={brand}
-              taskCount={tasks.filter(
-                (t) => t.brand_id === brand.id && t.status !== "Done"
-              ).length}
-              goalCount={goals.filter(
-                (g) => g.brand_id === brand.id && g.status === "active"
-              ).length}
-            />
-          ))}
-        </div>
+        {brands.length === 0 ? (
+          <p className="text-sm text-zinc-500 rounded-xl border border-dashed border-zinc-800 px-4 py-8 text-center">
+            No brands yet —{" "}
+            <Link href="/brands" className="text-emerald-400 hover:underline">
+              add your first brand
+            </Link>{" "}
+            to get started.
+          </p>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {brands.map((brand) => (
+              <BrandCard
+                key={brand.id}
+                brand={brand}
+                taskCount={tasks.filter(
+                  (t) => t.brand_id === brand.id && t.status !== "Done"
+                ).length}
+                goalCount={goals.filter(
+                  (g) => g.brand_id === brand.id && g.status === "active"
+                ).length}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </AppShell>
   );
