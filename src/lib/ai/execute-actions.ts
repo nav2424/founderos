@@ -88,6 +88,7 @@ function runAction(
         title: action.title.trim(),
         description: action.description ?? null,
         brand_id: brandId(brands(), action.brand_name, action.brand_stage),
+        goal_id: null,
         category: action.category ?? null,
         status: pickEnum(action.status, TASK_STATUSES, "Inbox"),
         priority: pickEnum(action.priority, TASK_PRIORITIES, "Medium"),
@@ -95,6 +96,8 @@ function runAction(
         reminder_date: null,
         estimated_impact: action.estimated_impact ?? 3,
         effort_level: action.effort_level ?? 3,
+        recurrence: "none",
+        focus_today: false,
       });
       return { action, success: true, message: `Created task "${t.title}"` };
     }

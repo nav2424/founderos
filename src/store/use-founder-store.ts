@@ -5,14 +5,21 @@ import { persist } from "zustand/middleware";
 import { EMPTY_FOUNDER_DATA } from "@/lib/empty-state";
 import type {
   Brand,
+  BrandFinance,
+  Contact,
   Goal,
   Idea,
   Kpi,
+  Milestone,
+  MrrEntry,
   Playbook,
   Reminder,
   Task,
   WeeklyReview,
 } from "@/lib/types";
+import { DEFAULT_BRAND_CONTEXT, DEFAULT_TASK_EXTRAS } from "@/lib/types";
+import { isMrrGoal } from "@/lib/goals";
+import { normalizeBrand, normalizeGoal, normalizeTask } from "@/lib/normalize-persist";
 import { founderSync } from "@/lib/supabase/data-sync";
 import { generateId, priorityScore } from "@/lib/utils";
 
@@ -25,14 +32,30 @@ interface FounderState {
   reminders: Reminder[];
   playbooks: Playbook[];
   weeklyReviews: WeeklyReview[];
+  mrrEntries: MrrEntry[];
+  milestones: Milestone[];
+  brandFinances: BrandFinance[];
+  contacts: Contact[];
   hydrated: boolean;
   userId: string | null;
+  lastSyncedAt: string | null;
 
   setUserId: (id: string | null) => void;
   hydrateFromSupabase: (data: Partial<FounderState>) => void;
   clearAllData: () => void;
 
-  addBrand: (brand: Omit<Brand, "id" | "created_at">) => Brand;
+  addBrand: (
+    brand: Pick<
+      Brand,
+      | "name"
+      | "description"
+      | "stage"
+      | "monthly_revenue"
+      | "priority_level"
+      | "categories"
+    > &
+      Partial<typeof DEFAULT_BRAND_CONTEXT>
+  ) => Brand;
   updateBrand: (id: string, updates: Partial<Brand>) => void;
   deleteBrand: (id: string) => void;
 
@@ -41,7 +64,11 @@ interface FounderState {
   deleteTask: (id: string) => void;
   completeTask: (id: string) => void;
 
-  addGoal: (goal: Omit<Goal, "id" | "created_at">) => Goal;
+  addGoal: (
+    goal: Omit<Goal, "id" | "created_at" | "parent_goal_id"> & {
+      parent_goal_id?: string | null;
+    }
+  ) => Goal;
   updateGoal: (id: string, updates: Partial<Goal>) => void;
   deleteGoal: (id: string) => void;
 
@@ -64,6 +91,28 @@ interface FounderState {
   deletePlaybook: (id: string) => void;
 
   addWeeklyReview: (review: Omit<WeeklyReview, "id" | "created_at">) => WeeklyReview;
+
+  addMrrEntry: (
+    entry: Omit<MrrEntry, "id" | "recorded_at"> & { recorded_at?: string }
+  ) => MrrEntry;
+  addMilestone: (
+    milestone: Omit<Milestone, "id" | "created_at" | "status"> & {
+      status?: Milestone["status"];
+    }
+  ) => Milestone;
+  updateMilestone: (id: string, updates: Partial<Milestone>) => void;
+  deleteMilestone: (id: string) => void;
+  addBrandFinance: (
+    finance: Omit<BrandFinance, "id">
+  ) => BrandFinance;
+  addContact: (
+    contact: Omit<Contact, "id" | "created_at">
+  ) => Contact;
+  updateContact: (id: string, updates: Partial<Contact>) => void;
+  deleteContact: (id: string) => void;
+  toggleTaskFocus: (id: string) => void;
+  clearFocusTasks: () => void;
+  syncMrrFromEntry: (brandId: string, amount: number) => void;
 }
 
 export const useFounderStore = create<FounderState>()(
@@ -72,6 +121,7 @@ export const useFounderStore = create<FounderState>()(
       ...EMPTY_FOUNDER_DATA,
       hydrated: false,
       userId: null,
+      lastSyncedAt: null,
 
       setUserId: (id) => set({ userId: id }),
 
@@ -84,11 +134,12 @@ export const useFounderStore = create<FounderState>()(
       clearAllData: () => set({ ...EMPTY_FOUNDER_DATA, hydrated: true }),
 
       addBrand: (brand) => {
-        const newBrand: Brand = {
+        const newBrand: Brand = normalizeBrand({
+          ...DEFAULT_BRAND_CONTEXT,
           ...brand,
           id: generateId(),
           created_at: new Date().toISOString(),
-        };
+        });
         set((s) => ({ brands: [...s.brands, newBrand] }));
         founderSync.brand.upsert(newBrand, get().userId);
         return newBrand;
@@ -129,12 +180,13 @@ export const useFounderStore = create<FounderState>()(
       },
 
       addTask: (task) => {
-        const newTask: Task = {
+        const newTask: Task = normalizeTask({
+          ...DEFAULT_TASK_EXTRAS,
           ...task,
           id: generateId(),
           created_at: new Date().toISOString(),
           completed_at: null,
-        };
+        });
         set((s) => ({ tasks: [...s.tasks, newTask] }));
         founderSync.task.upsert(newTask, get().userId);
         return newTask;
@@ -171,11 +223,12 @@ export const useFounderStore = create<FounderState>()(
       },
 
       addGoal: (goal) => {
-        const newGoal: Goal = {
+        const newGoal: Goal = normalizeGoal({
           ...goal,
+          parent_goal_id: goal.parent_goal_id ?? null,
           id: generateId(),
           created_at: new Date().toISOString(),
-        };
+        });
         set((s) => ({ goals: [...s.goals, newGoal] }));
         founderSync.goal.upsert(newGoal, get().userId);
         return newGoal;
@@ -227,6 +280,7 @@ export const useFounderStore = create<FounderState>()(
           title: idea.title,
           description: idea.description,
           brand_id: idea.brand_id,
+          goal_id: null,
           category: idea.category,
           status: "Inbox",
           priority: idea.priority as Task["priority"],
@@ -234,6 +288,8 @@ export const useFounderStore = create<FounderState>()(
           reminder_date: null,
           estimated_impact: idea.estimated_impact,
           effort_level: idea.effort_level,
+          recurrence: "none",
+          focus_today: false,
         });
         get().updateIdea(ideaId, { status: "Implemented" });
         return task;
@@ -334,9 +390,132 @@ export const useFounderStore = create<FounderState>()(
         founderSync.weeklyReview.upsert(newReview, get().userId);
         return newReview;
       },
+
+      syncMrrFromEntry: (brandId, amount) => {
+        get().updateBrand(brandId, { monthly_revenue: amount });
+        const goals = get().goals.filter(
+          (g) => g.brand_id === brandId && g.status === "active" && isMrrGoal(g)
+        );
+        goals.forEach((g) => get().updateGoal(g.id, { current_value: amount }));
+      },
+
+      addMrrEntry: (entry) => {
+        const newEntry: MrrEntry = {
+          ...entry,
+          id: generateId(),
+          recorded_at:
+            entry.recorded_at ?? new Date().toISOString().split("T")[0],
+        };
+        set((s) => ({
+          mrrEntries: [...s.mrrEntries, newEntry].sort((a, b) =>
+            b.recorded_at.localeCompare(a.recorded_at)
+          ),
+        }));
+        get().syncMrrFromEntry(entry.brand_id, entry.amount);
+        return newEntry;
+      },
+
+      addMilestone: (milestone) => {
+        const m: Milestone = {
+          ...milestone,
+          id: generateId(),
+          status: milestone.status ?? "pending",
+          created_at: new Date().toISOString(),
+        };
+        set((s) => ({
+          milestones: [...s.milestones, m].sort((a, b) =>
+            a.due_date.localeCompare(b.due_date)
+          ),
+        }));
+        return m;
+      },
+
+      updateMilestone: (id, updates) =>
+        set((s) => ({
+          milestones: s.milestones.map((m) =>
+            m.id === id ? { ...m, ...updates } : m
+          ),
+        })),
+
+      deleteMilestone: (id) =>
+        set((s) => ({
+          milestones: s.milestones.filter((m) => m.id !== id),
+        })),
+
+      addBrandFinance: (finance) => {
+        const f: BrandFinance = { ...finance, id: generateId() };
+        set((s) => ({
+          brandFinances: [
+            ...s.brandFinances.filter(
+              (x) => !(x.brand_id === f.brand_id && x.month === f.month)
+            ),
+            f,
+          ].sort((a, b) => b.month.localeCompare(a.month)),
+        }));
+        return f;
+      },
+
+      addContact: (contact) => {
+        const c: Contact = {
+          ...contact,
+          id: generateId(),
+          created_at: new Date().toISOString(),
+        };
+        set((s) => ({ contacts: [...s.contacts, c] }));
+        return c;
+      },
+
+      updateContact: (id, updates) =>
+        set((s) => ({
+          contacts: s.contacts.map((c) =>
+            c.id === id ? { ...c, ...updates } : c
+          ),
+        })),
+
+      deleteContact: (id) =>
+        set((s) => ({
+          contacts: s.contacts.filter((c) => c.id !== id),
+        })),
+
+      toggleTaskFocus: (id) => {
+        const task = get().tasks.find((t) => t.id === id);
+        if (!task || task.status === "Done") return;
+        const focused = get().tasks.filter(
+          (t) => t.focus_today && t.status !== "Done"
+        );
+        if (task.focus_today) {
+          get().updateTask(id, { focus_today: false });
+        } else if (focused.length < 3) {
+          get().updateTask(id, { focus_today: true });
+        }
+      },
+
+      clearFocusTasks: () =>
+        set((s) => ({
+          tasks: s.tasks.map((t) => ({ ...t, focus_today: false })),
+        })),
     }),
     {
-      name: "founderos-v2",
+      name: "founderos-v3",
+      version: 3,
+      migrate: (persisted, version) => {
+        const s = persisted as Record<string, unknown>;
+        if (version < 3) {
+          return {
+            ...EMPTY_FOUNDER_DATA,
+            brands: ((s.brands as Brand[]) ?? []).map(normalizeBrand),
+            tasks: ((s.tasks as Task[]) ?? []).map(normalizeTask),
+            goals: ((s.goals as Goal[]) ?? []).map(normalizeGoal),
+            ideas: (s.ideas as typeof EMPTY_FOUNDER_DATA.ideas) ?? [],
+            kpis: (s.kpis as typeof EMPTY_FOUNDER_DATA.kpis) ?? [],
+            reminders: (s.reminders as typeof EMPTY_FOUNDER_DATA.reminders) ?? [],
+            playbooks: (s.playbooks as typeof EMPTY_FOUNDER_DATA.playbooks) ?? [],
+            weeklyReviews:
+              (s.weeklyReviews as typeof EMPTY_FOUNDER_DATA.weeklyReviews) ?? [],
+          };
+        }
+        return persisted as typeof EMPTY_FOUNDER_DATA;
+      },
       partialize: (state) => ({
         brands: state.brands,
         tasks: state.tasks,
@@ -346,6 +525,10 @@ export const useFounderStore = create<FounderState>()(
         reminders: state.reminders,
         playbooks: state.playbooks,
         weeklyReviews: state.weeklyReviews,
+        mrrEntries: state.mrrEntries,
+        milestones: state.milestones,
+        brandFinances: state.brandFinances,
+        contacts: state.contacts,
       }),
     }
   )

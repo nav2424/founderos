@@ -4,6 +4,10 @@ import { use } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
+import { BrandTimeline } from "@/components/brand-timeline";
+import { BrandContextPanel } from "@/components/brand-context-panel";
+import { BrandContactsPanel } from "@/components/brand-contacts-panel";
+import { BrandFinancePanel } from "@/components/brand-finance-panel";
 import { TaskCard } from "@/components/task-card";
 import { GoalProgressCard } from "@/components/goal-progress-card";
 import { KpiCard } from "@/components/kpi-card";
@@ -52,11 +56,13 @@ export default function BrandDetailPage({
   return (
     <AppShell title={brand.name} subtitle={brand.description ?? undefined}>
       <div className="mb-6 flex flex-wrap gap-2">
-        <Badge>{brand.stage}</Badge>
-        <Badge variant="secondary">
-          ${brand.monthly_revenue.toLocaleString()}/mo
+        <Badge variant="outline">{brand.stage}</Badge>
+        <Badge variant="secondary" className="font-mono">
+          ${brand.monthly_revenue.toLocaleString()} MRR
         </Badge>
-        <Badge variant="outline">Priority {brand.priority_level}</Badge>
+        <Badge variant="outline">
+          {brandGoals.filter((g) => g.status === "active").length} active goals
+        </Badge>
       </div>
 
       {brand.categories.length > 0 && (
@@ -69,8 +75,9 @@ export default function BrandDetailPage({
         </div>
       )}
 
-      <Tabs defaultValue="overview">
-        <TabsList className="mb-4 flex-wrap h-auto">
+      <Tabs defaultValue="timeline">
+        <TabsList className="mb-4 flex-wrap h-auto bg-white/[0.03]">
+          <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="goals">Goals</TabsTrigger>
           <TabsTrigger value="tasks">Tasks</TabsTrigger>
@@ -78,28 +85,36 @@ export default function BrandDetailPage({
           <TabsTrigger value="ideas">Ideas</TabsTrigger>
           <TabsTrigger value="reminders">Reminders</TabsTrigger>
           <TabsTrigger value="playbooks">Playbooks</TabsTrigger>
+          <TabsTrigger value="context">Context</TabsTrigger>
+          <TabsTrigger value="contacts">Contacts</TabsTrigger>
+          <TabsTrigger value="finance">P&amp;L</TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="timeline">
+          <BrandTimeline brand={brand} />
+        </TabsContent>
+
         <TabsContent value="overview" className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-xl border border-zinc-800 p-4">
-              <p className="text-2xl font-semibold">{brandTasks.filter((t) => t.status !== "Done").length}</p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+              <p className="text-2xl font-semibold tracking-tight">
+                {brandTasks.filter((t) => t.status !== "Done").length}
+              </p>
               <p className="text-xs text-zinc-500">Active tasks</p>
             </div>
-            <div className="rounded-xl border border-zinc-800 p-4">
-              <p className="text-2xl font-semibold">{brandGoals.filter((g) => g.status === "active").length}</p>
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+              <p className="text-2xl font-semibold tracking-tight">
+                {brandGoals.filter((g) => g.status === "active").length}
+              </p>
               <p className="text-xs text-zinc-500">Active goals</p>
             </div>
-            <div className="rounded-xl border border-zinc-800 p-4">
-              <p className="text-2xl font-semibold">{brandIdeas.filter((i) => i.status !== "Archived").length}</p>
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+              <p className="text-2xl font-semibold tracking-tight">
+                {brandIdeas.filter((i) => i.status !== "Archived").length}
+              </p>
               <p className="text-xs text-zinc-500">Active ideas</p>
             </div>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {brandGoals.slice(0, 2).map((g) => (
-              <GoalProgressCard key={g.id} goal={g} />
-            ))}
           </div>
         </TabsContent>
 
@@ -108,7 +123,7 @@ export default function BrandDetailPage({
             <GoalProgressCard key={g.id} goal={g} />
           ))}
           {brandGoals.length === 0 && (
-            <p className="text-sm text-zinc-500">No goals yet</p>
+            <p className="text-sm text-zinc-500">No goals — use the Timeline tab</p>
           )}
         </TabsContent>
 
@@ -130,7 +145,7 @@ export default function BrandDetailPage({
           {brandIdeas.map((idea) => (
             <div
               key={idea.id}
-              className="rounded-lg border border-zinc-800 p-3"
+              className="rounded-lg border border-white/[0.06] p-3"
             >
               <p className="text-sm font-medium text-zinc-200">{idea.title}</p>
               <div className="mt-1 flex gap-2">
@@ -149,9 +164,13 @@ export default function BrandDetailPage({
           {brandReminders.map((r) => (
             <div
               key={r.id}
-              className="flex justify-between rounded-lg border border-zinc-800 px-3 py-2 text-sm"
+              className="flex justify-between rounded-lg border border-white/[0.06] px-3 py-2 text-sm"
             >
-              <span className={r.completed ? "line-through text-zinc-500" : "text-zinc-200"}>
+              <span
+                className={
+                  r.completed ? "line-through text-zinc-500" : "text-zinc-200"
+                }
+              >
                 {r.title}
               </span>
               <span className="text-xs text-zinc-500">
@@ -159,6 +178,18 @@ export default function BrandDetailPage({
               </span>
             </div>
           ))}
+        </TabsContent>
+
+        <TabsContent value="context">
+          <BrandContextPanel brand={brand} />
+        </TabsContent>
+
+        <TabsContent value="contacts">
+          <BrandContactsPanel brandId={brand.id} />
+        </TabsContent>
+
+        <TabsContent value="finance">
+          <BrandFinancePanel brandId={brand.id} />
         </TabsContent>
 
         <TabsContent value="playbooks">
@@ -171,7 +202,10 @@ export default function BrandDetailPage({
             </p>
           ) : (
             brandPlaybooks.map((pb) => (
-              <div key={pb.id} className="rounded-lg border border-zinc-800 p-3 mb-2">
+              <div
+                key={pb.id}
+                className="rounded-lg border border-white/[0.06] p-3 mb-2"
+              >
                 <p className="font-medium text-zinc-200">{pb.title}</p>
                 <p className="text-xs text-zinc-500 mt-1">{pb.category}</p>
               </div>
@@ -183,7 +217,7 @@ export default function BrandDetailPage({
           {recentActivity.map((a, i) => (
             <div
               key={i}
-              className="flex justify-between text-sm border-b border-zinc-800/50 pb-2"
+              className="flex justify-between text-sm border-b border-white/[0.06] pb-2"
             >
               <span className="text-zinc-300">{a.label}</span>
               <span className="text-xs text-zinc-500">

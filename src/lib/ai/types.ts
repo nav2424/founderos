@@ -14,7 +14,16 @@ export interface ChatMessage {
 }
 
 export interface WorkspaceContext {
-  brands: { id: string; name: string; stage: string; label: string }[];
+  brands: {
+    id: string;
+    name: string;
+    stage: string;
+    label: string;
+    brief?: string | null;
+    positioning?: string | null;
+    icp?: string | null;
+    constraints?: string | null;
+  }[];
   tasks: {
     id: string;
     title: string;

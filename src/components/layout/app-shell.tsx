@@ -28,7 +28,7 @@ export function AppShell({ children, title, subtitle }: AppShellProps) {
 
   useKeyboardShortcuts({
     onOpenAssistant: () => setAssistantOpen(true),
-    onGoDashboard: () => router.push("/dashboard"),
+    onGoDashboard: () => router.push("/today"),
     onGoTasks: () => router.push("/tasks"),
   });
 

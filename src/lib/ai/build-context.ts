@@ -2,7 +2,16 @@ import type { Brand } from "@/lib/types";
 import type { WorkspaceContext } from "./types";
 
 type StoreSlice = {
-  brands: Brand[];
+  brands: Pick<
+    Brand,
+    | "id"
+    | "name"
+    | "stage"
+    | "brief"
+    | "positioning"
+    | "icp"
+    | "constraints"
+  >[];
   tasks: {
     id: string;
     title: string;
@@ -17,6 +26,10 @@ type StoreSlice = {
     type: string;
     status: string;
     brand_id: string | null;
+    target_metric: string | null;
+    current_value: number;
+    target_value: number;
+    deadline: string | null;
   }[];
   ideas: {
     id: string;
@@ -41,7 +54,10 @@ type StoreSlice = {
   weeklyReviews: { id: string; week_start: string }[];
 };
 
-function brandName(brands: Brand[], brandId: string | null): string | null {
+function brandName(
+  brands: { id: string; name: string }[],
+  brandId: string | null
+): string | null {
   if (!brandId) return null;
   return brands.find((b) => b.id === brandId)?.name ?? null;
 }
@@ -55,6 +71,10 @@ export function buildWorkspaceContext(store: StoreSlice): WorkspaceContext {
       name: b.name,
       stage: b.stage,
       label: `${b.name} (${b.stage})`,
+      brief: b.brief,
+      positioning: b.positioning,
+      icp: b.icp,
+      constraints: b.constraints,
     })),
     tasks: store.tasks.slice(0, 80).map((t) => ({
       id: t.id,
@@ -70,6 +90,10 @@ export function buildWorkspaceContext(store: StoreSlice): WorkspaceContext {
       type: g.type,
       status: g.status,
       brand_name: brandName(brands, g.brand_id),
+      target_metric: g.target_metric,
+      current_value: g.current_value,
+      target_value: g.target_value,
+      deadline: g.deadline,
     })),
     ideas: store.ideas.slice(0, 40).map((i) => ({
       id: i.id,

@@ -71,6 +71,7 @@ export function QuickCapture({ open, onOpenChange }: QuickCaptureProps) {
           title: title.trim(),
           description: description || null,
           brand_id: bid,
+          goal_id: null,
           category: null,
           status: "Inbox",
           priority: "Medium",
@@ -78,6 +79,8 @@ export function QuickCapture({ open, onOpenChange }: QuickCaptureProps) {
           reminder_date: null,
           estimated_impact: 3,
           effort_level: 3,
+          recurrence: "none",
+          focus_today: false,
         });
         break;
       case "idea":

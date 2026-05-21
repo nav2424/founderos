@@ -8,7 +8,9 @@ import { cn } from "@/lib/utils";
 import { useFounderStore } from "@/store/use-founder-store";
 import { buildWorkspaceContext } from "@/lib/ai/build-context";
 import { executeFounderActions } from "@/lib/ai/execute-actions";
-import type { ActionResult, ChatMessage } from "@/lib/ai/types";
+import { hasDestructiveActions } from "@/lib/ai/destructive-actions";
+import { AiConfirmDialog } from "@/components/ai-confirm-dialog";
+import type { ActionResult, ChatMessage, FounderAction } from "@/lib/ai/types";
 
 interface AiAssistantProps {
   variant?: "panel" | "page";
@@ -23,7 +25,37 @@ export function AiAssistant({ variant = "page", onClose }: AiAssistantProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastResults, setLastResults] = useState<ActionResult[]>([]);
+  const [pendingActions, setPendingActions] = useState<FounderAction[] | null>(
+    null
+  );
+  const [pendingReply, setPendingReply] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const applyActions = useCallback(
+    (actions: FounderAction[], replyText: string) => {
+      const results =
+        actions.length > 0 ? executeFounderActions(actions) : [];
+      setLastResults(results);
+      const executed = results.filter((r) => r.success).length;
+      const noActionsButClaimsWork =
+        actions.length === 0 &&
+        /\b(deleted|transferred|merged|created|updated|completed|moved)\b/i.test(
+          replyText
+        );
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: noActionsButClaimsWork
+            ? `${replyText}\n\n⚠️ No actions were executed. Try again with explicit commands.`
+            : executed > 0
+              ? `${replyText}\n\n✓ ${executed} action${executed === 1 ? "" : "s"} applied.`
+              : replyText,
+        },
+      ]);
+    },
+    []
+  );
 
   const send = useCallback(async () => {
     const text = input.trim();
@@ -66,30 +98,22 @@ export function AiAssistant({ variant = "page", onClose }: AiAssistantProps) {
       }
 
       const actions = Array.isArray(data.actions) ? data.actions : [];
-      const results =
-        actions.length > 0 ? executeFounderActions(actions) : [];
-
-      setLastResults(results);
-
-      const executed = results.filter((r) => r.success).length;
       const replyText = data.reply ?? "Done.";
-      const noActionsButClaimsWork =
-        actions.length === 0 &&
-        /\b(deleted|transferred|merged|created|updated|completed|moved)\b/i.test(
-          replyText
-        );
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: noActionsButClaimsWork
-            ? `${replyText}\n\n⚠️ No actions were executed. Try: "merge Natural Scents Idea into Growth and delete Idea brand" or tap Send again with "do it now".`
-            : executed > 0
-              ? `${replyText}\n\n✓ ${executed} action${executed === 1 ? "" : "s"} applied.`
-              : replyText,
-        },
-      ]);
+      if (hasDestructiveActions(actions)) {
+        setPendingActions(actions);
+        setPendingReply(replyText);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: `${replyText}\n\n⚠️ Confirm destructive actions before applying.`,
+          },
+        ]);
+        return;
+      }
+
+      applyActions(actions, replyText);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
       setMessages((prev) => prev.slice(0, -1));
@@ -103,7 +127,19 @@ export function AiAssistant({ variant = "page", onClose }: AiAssistantProps) {
         });
       });
     }
-  }, [input, loading, messages]);
+  }, [input, loading, messages, applyActions]);
+
+  function confirmPending() {
+    if (!pendingActions) return;
+    applyActions(pendingActions, pendingReply);
+    setPendingActions(null);
+    setPendingReply("");
+  }
+
+  function cancelPending() {
+    setPendingActions(null);
+    setPendingReply("");
+  }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -240,6 +276,13 @@ export function AiAssistant({ variant = "page", onClose }: AiAssistantProps) {
           </Button>
         </div>
       </div>
+
+      <AiConfirmDialog
+        open={pendingActions !== null}
+        actions={pendingActions ?? []}
+        onConfirm={confirmPending}
+        onCancel={cancelPending}
+      />
     </div>
   );
 }

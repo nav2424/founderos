@@ -69,6 +69,7 @@ export default function TasksPage() {
       title: title.trim(),
       description: null,
       brand_id: brandId === "none" ? null : brandId,
+      goal_id: null,
       category: null,
       status: "Inbox",
       priority,
@@ -76,6 +77,8 @@ export default function TasksPage() {
       reminder_date: null,
       estimated_impact: impact,
       effort_level: effort,
+      recurrence: "none",
+      focus_today: false,
     });
     setTitle("");
     setOpen(false);

@@ -1,6 +1,7 @@
 "use client";
 
 import { Bot, Menu } from "lucide-react";
+import { NotificationsBell } from "@/components/notifications-bell";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +40,8 @@ export function TopNav({
           )}
         </div>
       </div>
+      <div className="flex items-center gap-1">
+        <NotificationsBell />
       <Button
         size="sm"
         variant="ghost"
@@ -53,6 +56,7 @@ export function TopNav({
         <span className="hidden text-xs font-medium sm:inline">Ask AI</span>
         <kbd className="hidden lg:inline text-[10px] text-zinc-600">⌘⇧A</kbd>
       </Button>
+      </div>
     </header>
   );
 }

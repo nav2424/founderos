@@ -18,6 +18,8 @@ export type IdeaStatus =
   | "Implemented"
   | "Archived";
 
+export type TaskRecurrence = "none" | "daily" | "weekly" | "monthly";
+
 export interface Brand {
   id: string;
   user_id?: string;
@@ -28,6 +30,13 @@ export interface Brand {
   priority_level: number;
   categories: string[];
   created_at: string;
+  /** AI & strategy context */
+  brief: string | null;
+  positioning: string | null;
+  icp: string | null;
+  constraints: string | null;
+  notes: string | null;
+  notion_url: string | null;
 }
 
 export interface Task {
@@ -36,6 +45,7 @@ export interface Task {
   title: string;
   description: string | null;
   brand_id: string | null;
+  goal_id: string | null;
   category: string | null;
   status: TaskStatus;
   priority: TaskPriority;
@@ -43,6 +53,8 @@ export interface Task {
   reminder_date: string | null;
   estimated_impact: number;
   effort_level: number;
+  recurrence: TaskRecurrence;
+  focus_today: boolean;
   created_at: string;
   completed_at: string | null;
 }
@@ -53,12 +65,59 @@ export interface Goal {
   title: string;
   description: string | null;
   brand_id: string | null;
+  parent_goal_id: string | null;
   type: GoalType;
   target_metric: string | null;
   current_value: number;
   target_value: number;
   deadline: string | null;
   status: GoalStatus;
+  created_at: string;
+}
+
+export interface Milestone {
+  id: string;
+  user_id?: string;
+  brand_id: string;
+  goal_id: string | null;
+  title: string;
+  description: string | null;
+  due_date: string;
+  status: "pending" | "completed";
+  created_at: string;
+}
+
+export interface MrrEntry {
+  id: string;
+  user_id?: string;
+  brand_id: string;
+  amount: number;
+  period: "weekly" | "monthly";
+  recorded_at: string;
+  notes: string | null;
+}
+
+export interface BrandFinance {
+  id: string;
+  user_id?: string;
+  brand_id: string;
+  month: string;
+  revenue: number;
+  cogs: number;
+  ad_spend: number;
+  notes: string | null;
+}
+
+export interface Contact {
+  id: string;
+  user_id?: string;
+  brand_id: string;
+  name: string;
+  company: string | null;
+  email: string | null;
+  status: string;
+  next_follow_up: string | null;
+  notes: string | null;
   created_at: string;
 }
 
@@ -129,3 +188,18 @@ export interface WeeklyReview {
 }
 
 export type QuickCaptureType = "task" | "idea" | "reminder" | "goal";
+
+export const DEFAULT_BRAND_CONTEXT = {
+  brief: null,
+  positioning: null,
+  icp: null,
+  constraints: null,
+  notes: null,
+  notion_url: null,
+} as const;
+
+export const DEFAULT_TASK_EXTRAS = {
+  goal_id: null,
+  recurrence: "none" as TaskRecurrence,
+  focus_today: false,
+};

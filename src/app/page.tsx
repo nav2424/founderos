@@ -18,7 +18,7 @@ export default async function HomePage() {
   }
 
   if (isLoggedIn) {
-    redirect("/dashboard");
+    redirect("/today");
   }
 
   return (

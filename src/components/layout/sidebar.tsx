@@ -9,8 +9,9 @@ import {
   Calendar,
   CheckSquare,
   Bot,
+  Briefcase,
   ClipboardList,
-  LayoutDashboard,
+  Sun,
   Lightbulb,
   Settings,
   Target,
@@ -20,7 +21,8 @@ import { NAV_ITEMS } from "@/lib/constants";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Bot,
-  LayoutDashboard,
+  Sun,
+  Briefcase,
   Building2,
   CheckSquare,
   Target,
@@ -51,7 +53,7 @@ export function Sidebar({ onNavigate, expanded = false }: SidebarProps) {
     >
       <div className="flex h-14 items-center justify-center border-b border-white/[0.04] px-2">
         <Link
-          href="/dashboard"
+          href="/today"
           className={cn(
             "flex items-center min-w-0",
             showLabels ? "gap-2.5 px-1" : "justify-center"
@@ -71,10 +73,10 @@ export function Sidebar({ onNavigate, expanded = false }: SidebarProps) {
       </div>
       <nav className="flex-1 space-y-0.5 overflow-y-auto p-2">
         {NAV_ITEMS.map((item) => {
-          const Icon = iconMap[item.icon] ?? LayoutDashboard;
+          const Icon = iconMap[item.icon] ?? Sun;
           const active =
             pathname === item.href ||
-            (item.href !== "/dashboard" && pathname.startsWith(item.href));
+            (item.href !== "/today" && pathname.startsWith(item.href));
           const isAi = item.href === "/assistant";
           return (
             <Link

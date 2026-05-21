@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useFounderStore } from "@/store/use-founder-store";
+import { buildWeeklyStats } from "@/lib/weekly-stats";
+import { buildWeeklyInsights } from "@/lib/insights";
 import { getWeekStart } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 
@@ -25,6 +27,12 @@ type FieldKey = (typeof fields)[number]["key"];
 export function WeeklyReviewForm() {
   const addWeeklyReview = useFounderStore((s) => s.addWeeklyReview);
   const weeklyReviews = useFounderStore((s) => s.weeklyReviews);
+  const tasks = useFounderStore((s) => s.tasks);
+  const goals = useFounderStore((s) => s.goals);
+  const brands = useFounderStore((s) => s.brands);
+  const mrrEntries = useFounderStore((s) => s.mrrEntries);
+  const stats = buildWeeklyStats(tasks, goals, mrrEntries, brands);
+  const insights = buildWeeklyInsights(brands, goals, tasks);
   const [values, setValues] = useState<Record<FieldKey, string>>(
     Object.fromEntries(fields.map((f) => [f.key, ""])) as Record<FieldKey, string>
   );
@@ -53,6 +61,36 @@ export function WeeklyReviewForm() {
 
   return (
     <div className="space-y-8">
+      <div className="grid gap-3 sm:grid-cols-4">
+        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+          <p className="text-2xl font-semibold">{stats.tasksCompleted}</p>
+          <p className="text-xs text-zinc-500">Tasks done (7d)</p>
+        </div>
+        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+          <p className="text-2xl font-semibold text-amber-400/90">
+            {stats.overdueCount}
+          </p>
+          <p className="text-xs text-zinc-500">Overdue</p>
+        </div>
+        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+          <p className="text-2xl font-semibold">{stats.goalsAtRisk}</p>
+          <p className="text-xs text-zinc-500">Goals ≤14d</p>
+        </div>
+        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+          <p className="text-sm font-medium text-zinc-200">
+            {stats.mrrDelta !== null
+              ? `$${stats.mrrDelta >= 0 ? "+" : ""}${stats.mrrDelta.toLocaleString()}`
+              : "—"}
+          </p>
+          <p className="text-xs text-zinc-500">{stats.mrrDeltaLabel}</p>
+        </div>
+      </div>
+      {insights[0] && insights[0].id !== "all-clear" && (
+        <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/[0.04] p-4">
+          <p className="text-sm font-medium text-zinc-100">{insights[0].title}</p>
+          <p className="mt-1 text-xs text-zinc-500">{insights[0].body}</p>
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="space-y-5">
         {fields.map(({ key, label }) => (
           <div key={key}>

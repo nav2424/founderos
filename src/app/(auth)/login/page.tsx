@@ -22,7 +22,7 @@ export default function LoginPage() {
     setError("");
 
     if (!isSupabaseConfigured()) {
-      router.push("/dashboard");
+      router.push("/today");
       setLoading(false);
       return;
     }
