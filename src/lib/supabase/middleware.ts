@@ -51,7 +51,8 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/kpis") ||
     request.nextUrl.pathname.startsWith("/playbooks") ||
     request.nextUrl.pathname.startsWith("/weekly-review") ||
-    request.nextUrl.pathname.startsWith("/settings");
+    request.nextUrl.pathname.startsWith("/settings") ||
+    request.nextUrl.pathname.startsWith("/assistant");
 
   // Allow local dev without Supabase configured
   const supabaseConfigured = !!url && !!key;

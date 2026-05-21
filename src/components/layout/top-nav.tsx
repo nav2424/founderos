@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, Plus, Search } from "lucide-react";
+import { Bot, Menu, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -9,6 +9,7 @@ interface TopNavProps {
   subtitle?: string;
   onMenuClick?: () => void;
   onQuickCapture?: () => void;
+  onOpenAssistant?: () => void;
 }
 
 export function TopNav({
@@ -16,6 +17,7 @@ export function TopNav({
   subtitle,
   onMenuClick,
   onQuickCapture,
+  onOpenAssistant,
 }: TopNavProps) {
   return (
     <header className="flex items-center justify-between gap-4 border-b border-zinc-800/80 bg-zinc-950/50 px-4 py-4 md:px-6">
@@ -44,6 +46,15 @@ export function TopNav({
             disabled
           />
         </div>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onOpenAssistant}
+          className="gap-1.5 border-zinc-700"
+        >
+          <Bot className="h-4 w-4" />
+          <span className="hidden sm:inline">AI</span>
+        </Button>
         <Button size="sm" onClick={onQuickCapture} className="gap-1.5">
           <Plus className="h-4 w-4" />
           <span className="hidden sm:inline">Capture</span>

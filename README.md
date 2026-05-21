@@ -16,6 +16,7 @@ Manage multiple brands, goals, tasks, reminders, ideas, KPIs, and weekly executi
 - **Playbooks** — SOPs per brand
 - **Weekly Review** — Guided reflection + history
 - **Quick Capture** — `⌘K` to add task, idea, reminder, or goal
+- **AI Assistant** — Paste brain dumps; creates brands, tasks, goals, KPIs, and more (`⌘⇧A`)
 
 ## Tech Stack
 
@@ -72,6 +73,7 @@ Edit `.env.local`:
 NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+OPENAI_API_KEY=sk-your-openai-key
 ```
 
 ### 4. Enable Email Auth
@@ -114,8 +116,15 @@ supabase/
 | Shortcut | Action |
 |----------|--------|
 | `⌘K` | Quick capture |
+| `⌘⇧A` | Open AI Assistant |
 | `⌘⇧D` | Go to dashboard |
 | `⌘⇧T` | Go to tasks |
+
+## AI Assistant
+
+Open **AI Assistant** from the sidebar, the floating bot button, or `⌘⇧A`. Paste notes, lists, or instructions — the assistant creates and updates brands, tasks, goals, ideas, KPIs, reminders, playbooks, and weekly reviews in your workspace.
+
+Requires `OPENAI_API_KEY` in `.env.local` (and Netlify env vars for production). Uses `gpt-4o-mini` by default.
 
 ## Priority Scoring
 
@@ -162,6 +171,7 @@ Ensure `.env.local` is **not** committed (it’s in `.gitignore`).
 | `NEXT_PUBLIC_SUPABASE_URL` | From Supabase → Settings → API |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase **anon** key (public) |
 | `NEXT_PUBLIC_APP_URL` | Your Netlify URL, e.g. `https://founderos.netlify.app` |
+| `OPENAI_API_KEY` | OpenAI API key for AI Assistant |
 
 Redeploy after saving variables (**Deploys → Trigger deploy**).
 

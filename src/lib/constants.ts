@@ -30,6 +30,7 @@ export const IDEA_STATUSES = [
 
 export const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: "LayoutDashboard" },
+  { href: "/assistant", label: "AI Assistant", icon: "Bot" },
   { href: "/brands", label: "Brands", icon: "Building2" },
   { href: "/tasks", label: "Tasks", icon: "CheckSquare" },
   { href: "/goals", label: "Goals", icon: "Target" },

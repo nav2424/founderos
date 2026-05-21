@@ -6,6 +6,7 @@ export function useKeyboardShortcuts(handlers: {
   onQuickCapture?: () => void;
   onGoDashboard?: () => void;
   onGoTasks?: () => void;
+  onOpenAssistant?: () => void;
 }) {
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
@@ -21,6 +22,10 @@ export function useKeyboardShortcuts(handlers: {
       if (meta && e.shiftKey && e.key === "T") {
         e.preventDefault();
         handlers.onGoTasks?.();
+      }
+      if (meta && e.shiftKey && e.key === "A") {
+        e.preventDefault();
+        handlers.onOpenAssistant?.();
       }
     }
     window.addEventListener("keydown", handleKey);

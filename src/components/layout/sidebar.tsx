@@ -8,6 +8,7 @@ import {
   Building2,
   Calendar,
   CheckSquare,
+  Bot,
   ClipboardList,
   LayoutDashboard,
   Lightbulb,
@@ -19,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/lib/constants";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  Bot,
   LayoutDashboard,
   Building2,
   CheckSquare,
@@ -75,7 +77,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
       </nav>
       <div className="border-t border-zinc-800/80 p-3">
         <p className="px-3 text-[10px] text-zinc-600">
-          ⌘K quick capture · ⌘⇧D dashboard
+          ⌘K capture · ⌘⇧A assistant
         </p>
       </div>
     </aside>

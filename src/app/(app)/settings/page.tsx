@@ -64,6 +64,19 @@ export default function SettingsPage() {
 
         <Card>
           <CardHeader>
+            <CardTitle className="text-sm">AI Assistant</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-zinc-400">
+              Requires <code className="text-zinc-300">OPENAI_API_KEY</code> in
+              .env.local (and Netlify for production). Open from the sidebar or
+              press ⌘⇧A.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <CardTitle className="text-sm">Account</CardTitle>
           </CardHeader>
           <CardContent>
