@@ -1,14 +1,13 @@
 "use client";
 
-import { Bot, Menu, Plus, Search } from "lucide-react";
+import { Bot, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 interface TopNavProps {
   title: string;
   subtitle?: string;
   onMenuClick?: () => void;
-  onQuickCapture?: () => void;
   onOpenAssistant?: () => void;
 }
 
@@ -16,53 +15,44 @@ export function TopNav({
   title,
   subtitle,
   onMenuClick,
-  onQuickCapture,
   onOpenAssistant,
 }: TopNavProps) {
   return (
-    <header className="flex items-center justify-between gap-4 border-b border-zinc-800/80 bg-zinc-950/50 px-4 py-4 md:px-6">
-      <div className="flex items-center gap-3">
+    <header className="glass glass-border flex h-14 shrink-0 items-center justify-between gap-4 border-b px-4 md:px-6">
+      <div className="flex min-w-0 items-center gap-3">
         <Button
           variant="ghost"
           size="icon"
-          className="md:hidden"
+          className="md:hidden shrink-0 h-8 w-8 text-zinc-500 hover:text-zinc-200"
           onClick={onMenuClick}
         >
-          <Menu className="h-5 w-5" />
+          <Menu className="h-4 w-4" />
         </Button>
-        <div>
-          <h1 className="text-lg font-semibold text-zinc-100">{title}</h1>
+        <div className="min-w-0">
+          <h1 className="truncate text-[15px] font-medium tracking-tight text-zinc-100">
+            {title}
+          </h1>
           {subtitle && (
-            <p className="text-xs text-zinc-500">{subtitle}</p>
+            <p className="truncate text-[11px] text-zinc-500 font-mono tabular-nums">
+              {subtitle}
+            </p>
           )}
         </div>
       </div>
-      <div className="flex items-center gap-2">
-        <div className="relative hidden sm:block">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
-          <Input
-            placeholder="Search... (coming soon)"
-            className="w-48 pl-9 md:w-64"
-            disabled
-          />
-        </div>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={onOpenAssistant}
-          className="gap-1.5 border-zinc-700"
-        >
-          <Bot className="h-4 w-4" />
-          <span className="hidden sm:inline">AI</span>
-        </Button>
-        <Button size="sm" onClick={onQuickCapture} className="gap-1.5">
-          <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">Capture</span>
-          <kbd className="hidden rounded bg-emerald-700/50 px-1.5 text-[10px] md:inline">
-            ⌘K
-          </kbd>
-        </Button>
-      </div>
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={onOpenAssistant}
+        className={cn(
+          "h-8 gap-2 rounded-full px-3 text-zinc-400",
+          "hover:text-zinc-100 hover:bg-white/[0.04]",
+          "border border-transparent hover:border-white/[0.06]"
+        )}
+      >
+        <Bot className="h-3.5 w-3.5" />
+        <span className="hidden text-xs font-medium sm:inline">Ask AI</span>
+        <kbd className="hidden lg:inline text-[10px] text-zinc-600">⌘⇧A</kbd>
+      </Button>
     </header>
   );
 }

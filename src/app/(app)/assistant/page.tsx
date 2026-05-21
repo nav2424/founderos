@@ -9,7 +9,7 @@ export default function AssistantPage() {
       title="AI Assistant"
       subtitle="Paste anything — I'll structure it into your OS"
     >
-      <div className="rounded-xl border border-zinc-800 overflow-hidden -mx-0">
+      <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
         <AiAssistant variant="page" />
       </div>
     </AppShell>

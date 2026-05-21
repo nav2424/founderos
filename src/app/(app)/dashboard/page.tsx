@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, Sparkles } from "lucide-react";
+import { AlertTriangle, ArrowRight } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { DashboardCard } from "@/components/dashboard-card";
 import { BrandCard } from "@/components/brand-card";
@@ -88,14 +88,6 @@ export default function DashboardPage() {
         day: "numeric",
       })}
     >
-      <div className="mb-6 flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3">
-        <Sparkles className="h-4 w-4 text-emerald-400 shrink-0" />
-        <p className="text-sm text-zinc-300">
-          Press <kbd className="rounded bg-zinc-800 px-1.5 text-xs">⌘K</kbd> to
-          quick capture — task, idea, reminder, or goal.
-        </p>
-      </div>
-
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-4">
           <DashboardCard

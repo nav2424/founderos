@@ -29,8 +29,8 @@ export const IDEA_STATUSES = [
 ] as const;
 
 export const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard", icon: "LayoutDashboard" },
   { href: "/assistant", label: "AI Assistant", icon: "Bot" },
+  { href: "/dashboard", label: "Dashboard", icon: "LayoutDashboard" },
   { href: "/brands", label: "Brands", icon: "Building2" },
   { href: "/tasks", label: "Tasks", icon: "CheckSquare" },
   { href: "/goals", label: "Goals", icon: "Target" },

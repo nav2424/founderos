@@ -15,8 +15,7 @@ Manage multiple brands, goals, tasks, reminders, ideas, KPIs, and weekly executi
 - **Calendar** — In-app reminders (upcoming / overdue)
 - **Playbooks** — SOPs per brand
 - **Weekly Review** — Guided reflection + history
-- **Quick Capture** — `⌘K` to add task, idea, reminder, or goal
-- **AI Assistant** — Paste brain dumps; creates brands, tasks, goals, KPIs, and more (`⌘⇧A`)
+- **AI Assistant** — Paste brain dumps; creates brands, tasks, goals, KPIs, and more (`⌘K` or `⌘⇧A`)
 
 ## Tech Stack
 
@@ -115,7 +114,7 @@ supabase/
 
 | Shortcut | Action |
 |----------|--------|
-| `⌘K` | Quick capture |
+| `⌘K` | Open AI Assistant |
 | `⌘⇧A` | Open AI Assistant |
 | `⌘⇧D` | Go to dashboard |
 | `⌘⇧T` | Go to tasks |

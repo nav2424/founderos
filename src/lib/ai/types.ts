@@ -14,7 +14,7 @@ export interface ChatMessage {
 }
 
 export interface WorkspaceContext {
-  brands: { id: string; name: string; stage: string }[];
+  brands: { id: string; name: string; stage: string; label: string }[];
   tasks: {
     id: string;
     title: string;
@@ -57,6 +57,7 @@ export type FounderAction =
       title: string;
       description?: string | null;
       brand_name?: string | null;
+      brand_stage?: string | null;
       category?: string | null;
       status?: TaskStatus;
       priority?: TaskPriority;
@@ -69,6 +70,7 @@ export type FounderAction =
       title: string;
       description?: string | null;
       brand_name?: string | null;
+      brand_stage?: string | null;
       goal_type?: GoalType;
       target_metric?: string | null;
       current_value?: number;
@@ -81,6 +83,7 @@ export type FounderAction =
       title: string;
       description?: string | null;
       brand_name?: string | null;
+      brand_stage?: string | null;
       category?: IdeaCategory;
       status?: IdeaStatus;
       priority?: string;
@@ -91,6 +94,7 @@ export type FounderAction =
       type: "create_kpi";
       name: string;
       brand_name?: string | null;
+      brand_stage?: string | null;
       value?: number;
       target_value?: number;
       period?: KpiPeriod;
@@ -102,6 +106,7 @@ export type FounderAction =
       title: string;
       description?: string | null;
       brand_name?: string | null;
+      brand_stage?: string | null;
       due_date?: string;
       repeat_frequency?: string | null;
     }
@@ -109,6 +114,7 @@ export type FounderAction =
       type: "create_playbook";
       title: string;
       brand_name?: string | null;
+      brand_stage?: string | null;
       category?: string | null;
       content?: string | null;
     }
@@ -134,6 +140,7 @@ export type FounderAction =
       priority?: TaskPriority;
       due_date?: string | null;
       brand_name?: string | null;
+      brand_stage?: string | null;
     }
   | { type: "delete_task"; match_title: string }
   | { type: "complete_reminder"; match_title: string }
@@ -141,12 +148,24 @@ export type FounderAction =
   | {
       type: "update_goal";
       match_title: string;
+      brand_name?: string | null;
+      brand_stage?: string | null;
       current_value?: number;
       target_value?: number;
       status?: GoalStatus;
     }
   | { type: "delete_goal"; match_title: string }
-  | { type: "delete_idea"; match_title: string };
+  | { type: "delete_idea"; match_title: string }
+  | { type: "delete_brand"; brand_name: string; stage?: string }
+  | {
+      type: "merge_brands";
+      source_brand_name: string;
+      source_stage?: string;
+      target_brand_name: string;
+      target_stage?: string;
+      only_active_tasks?: boolean;
+      only_active_goals?: boolean;
+    };
 
 export interface AssistantResponse {
   reply: string;

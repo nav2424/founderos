@@ -3,10 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bot } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { Sidebar } from "./sidebar";
 import { TopNav } from "./top-nav";
-import { QuickCapture } from "@/components/quick-capture";
 import { AiAssistant } from "@/components/ai-assistant";
 import { useSupabaseSync } from "@/hooks/use-supabase-sync";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
@@ -20,7 +19,6 @@ interface AppShellProps {
 
 export function AppShell({ children, title, subtitle }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [captureOpen, setCaptureOpen] = useState(false);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
@@ -29,49 +27,52 @@ export function AppShell({ children, title, subtitle }: AppShellProps) {
   useSupabaseSync();
 
   useKeyboardShortcuts({
-    onQuickCapture: () => setCaptureOpen(true),
+    onOpenAssistant: () => setAssistantOpen(true),
     onGoDashboard: () => router.push("/dashboard"),
     onGoTasks: () => router.push("/tasks"),
-    onOpenAssistant: () => setAssistantOpen(true),
   });
 
   return (
-    <div className="flex h-screen overflow-hidden bg-zinc-950">
+    <div className="app-canvas flex h-screen overflow-hidden">
       <div className="hidden md:flex md:shrink-0">
         <Sidebar />
       </div>
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
           <div
-            className="absolute inset-0 bg-black/60"
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             onClick={() => setSidebarOpen(false)}
           />
-          <div className="relative z-50 h-full w-56">
-            <Sidebar onNavigate={() => setSidebarOpen(false)} />
+          <div className="relative z-50 h-full w-48">
+            <Sidebar
+              expanded
+              onNavigate={() => setSidebarOpen(false)}
+            />
           </div>
         </div>
       )}
-      <div className="flex flex-1 flex-col overflow-hidden min-w-0">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <TopNav
           title={title}
           subtitle={subtitle}
           onMenuClick={() => setSidebarOpen(true)}
-          onQuickCapture={() => setCaptureOpen(true)}
           onOpenAssistant={() => setAssistantOpen(true)}
         />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto px-4 py-5 md:px-8 md:py-6">
+          {children}
+        </main>
       </div>
 
       {assistantOpen && (
         <>
           <div
-            className="fixed inset-0 z-40 bg-black/50 md:bg-black/30"
+            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-[2px]"
             onClick={() => setAssistantOpen(false)}
           />
           <div
             className={cn(
-              "fixed z-50 flex flex-col bg-zinc-950 border-zinc-800 shadow-2xl",
-              "inset-x-0 bottom-0 top-16 border-t md:inset-auto md:top-0 md:right-0 md:bottom-0 md:w-[420px] md:border-l md:border-t-0"
+              "glass glass-border fixed z-50 flex flex-col shadow-2xl shadow-black/50",
+              "inset-x-0 bottom-0 top-14 border-t md:inset-auto md:top-0 md:right-0 md:bottom-0 md:w-[400px] md:border-l md:border-t-0"
             )}
           >
             <AiAssistant
@@ -85,18 +86,17 @@ export function AppShell({ children, title, subtitle }: AppShellProps) {
       <Link
         href="/assistant"
         className={cn(
-          "fixed bottom-5 right-5 z-30 flex h-12 w-12 items-center justify-center rounded-full",
-          "bg-emerald-600 text-white shadow-lg shadow-emerald-900/40",
-          "hover:bg-emerald-500 transition-colors md:bottom-6 md:right-6",
-          (assistantOpen || hideAssistantFab) && "hidden"
+          "fixed bottom-6 right-6 z-30 flex h-11 w-11 items-center justify-center rounded-full",
+          "glass glass-border border text-zinc-300",
+          "hover:text-emerald-400 hover:border-emerald-500/20 hover:shadow-[0_0_24px_-4px_rgba(16,185,129,0.35)]",
+          "transition-all duration-300",
+          (assistantOpen || hideAssistantFab) && "pointer-events-none opacity-0"
         )}
-        aria-label="Open AI Assistant"
-        title="AI Assistant (⌘⇧A)"
+        aria-label="Open AI"
+        title="AI (⌘⇧A)"
       >
-        <Bot className="h-5 w-5" />
+        <Sparkles className="h-4 w-4" />
       </Link>
-
-      <QuickCapture open={captureOpen} onOpenChange={setCaptureOpen} />
     </div>
   );
 }

@@ -17,12 +17,21 @@ const ACTION_TYPES = new Set([
   "update_goal",
   "delete_goal",
   "delete_idea",
+  "delete_brand",
+  "merge_brands",
 ]);
+
+function extractJson(raw: string): string {
+  const trimmed = raw.trim();
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fenced) return fenced[1].trim();
+  return trimmed;
+}
 
 export function parseAssistantResponse(raw: string): AssistantResponse {
   let parsed: unknown;
   try {
-    parsed = JSON.parse(raw);
+    parsed = JSON.parse(extractJson(raw));
   } catch {
     return {
       reply: raw.trim() || "I couldn't parse a structured response. Try again.",

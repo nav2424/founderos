@@ -1,5 +1,5 @@
 import { useFounderStore } from "@/store/use-founder-store";
-import type { Brand } from "@/lib/types";
+import { resolveBrand, resolveBrandId } from "@/lib/ai/resolve-brand";
 import { getWeekStart } from "@/lib/utils";
 import type { ActionResult, FounderAction } from "./types";
 import {
@@ -8,18 +8,6 @@ import {
   TASK_PRIORITIES,
   TASK_STATUSES,
 } from "@/lib/constants";
-
-function resolveBrandId(brands: Brand[], name?: string | null): string | null {
-  if (!name?.trim()) return null;
-  const n = name.trim().toLowerCase();
-  const exact = brands.find((b) => b.name.toLowerCase() === n);
-  if (exact) return exact.id;
-  const partial = brands.find(
-    (b) =>
-      b.name.toLowerCase().includes(n) || n.includes(b.name.toLowerCase())
-  );
-  return partial?.id ?? null;
-}
 
 function findByTitle<T extends { title: string }>(
   items: T[],
@@ -46,13 +34,20 @@ function parseDueDate(iso?: string | null): string {
   return new Date(Date.now() + 86400000).toISOString();
 }
 
+function brandId(
+  brands: ReturnType<typeof useFounderStore.getState>["brands"],
+  name?: string | null,
+  stage?: string | null
+) {
+  return resolveBrandId(brands, name, stage);
+}
+
 export function executeFounderActions(actions: FounderAction[]): ActionResult[] {
-  const store = useFounderStore.getState();
   const results: ActionResult[] = [];
 
   for (const action of actions) {
     try {
-      results.push(runAction(store, action));
+      results.push(runAction(useFounderStore.getState(), action));
     } catch (e) {
       results.push({
         action,
@@ -84,7 +79,7 @@ function runAction(
       return {
         action,
         success: true,
-        message: `Created brand "${b.name}"`,
+        message: `Created brand "${b.name}" (${b.stage})`,
       };
     }
 
@@ -92,7 +87,7 @@ function runAction(
       const t = store.addTask({
         title: action.title.trim(),
         description: action.description ?? null,
-        brand_id: resolveBrandId(brands(), action.brand_name),
+        brand_id: brandId(brands(), action.brand_name, action.brand_stage),
         category: action.category ?? null,
         status: pickEnum(action.status, TASK_STATUSES, "Inbox"),
         priority: pickEnum(action.priority, TASK_PRIORITIES, "Medium"),
@@ -108,7 +103,7 @@ function runAction(
       const g = store.addGoal({
         title: action.title.trim(),
         description: action.description ?? null,
-        brand_id: resolveBrandId(brands(), action.brand_name),
+        brand_id: brandId(brands(), action.brand_name, action.brand_stage),
         type: pickEnum(action.goal_type, GOAL_TYPES, "Weekly"),
         target_metric: action.target_metric ?? null,
         current_value: action.current_value ?? 0,
@@ -123,7 +118,7 @@ function runAction(
       const i = store.addIdea({
         title: action.title.trim(),
         description: action.description ?? null,
-        brand_id: resolveBrandId(brands(), action.brand_name),
+        brand_id: brandId(brands(), action.brand_name, action.brand_stage),
         category: pickEnum(action.category, IDEA_CATEGORIES, "Other"),
         priority: action.priority ?? "Medium",
         status: action.status ?? "Raw Idea",
@@ -136,7 +131,7 @@ function runAction(
     case "create_kpi": {
       const k = store.addKpi({
         name: action.name.trim(),
-        brand_id: resolveBrandId(brands(), action.brand_name),
+        brand_id: brandId(brands(), action.brand_name, action.brand_stage),
         value: action.value ?? 0,
         target_value: action.target_value ?? 0,
         period: action.period ?? "Monthly",
@@ -150,7 +145,7 @@ function runAction(
       const r = store.addReminder({
         title: action.title.trim(),
         description: action.description ?? null,
-        brand_id: resolveBrandId(brands(), action.brand_name),
+        brand_id: brandId(brands(), action.brand_name, action.brand_stage),
         due_date: parseDueDate(action.due_date),
         repeat_frequency: action.repeat_frequency ?? null,
         completed: false,
@@ -165,7 +160,7 @@ function runAction(
     case "create_playbook": {
       const p = store.addPlaybook({
         title: action.title.trim(),
-        brand_id: resolveBrandId(brands(), action.brand_name),
+        brand_id: brandId(brands(), action.brand_name, action.brand_stage),
         category: action.category ?? null,
         content: action.content ?? null,
       });
@@ -196,6 +191,93 @@ function runAction(
       };
     }
 
+    case "merge_brands": {
+      const source = resolveBrand(
+        brands(),
+        action.source_brand_name,
+        action.source_stage
+      );
+      const target = resolveBrand(
+        brands(),
+        action.target_brand_name,
+        action.target_stage
+      );
+      if (!source) {
+        throw new Error(
+          `Source brand not found: "${action.source_brand_name}"${action.source_stage ? ` (${action.source_stage})` : ""}`
+        );
+      }
+      if (!target) {
+        throw new Error(
+          `Target brand not found: "${action.target_brand_name}"${action.target_stage ? ` (${action.target_stage})` : ""}`
+        );
+      }
+      if (source.id === target.id) {
+        throw new Error("Source and target brand are the same");
+      }
+
+      const onlyActiveTasks = action.only_active_tasks !== false;
+      const onlyActiveGoals = action.only_active_goals !== false;
+      const state = useFounderStore.getState();
+      let movedTasks = 0;
+      let movedGoals = 0;
+      let movedOther = 0;
+
+      for (const task of state.tasks.filter((t) => t.brand_id === source.id)) {
+        if (onlyActiveTasks && task.status === "Done") continue;
+        store.updateTask(task.id, { brand_id: target.id });
+        movedTasks++;
+      }
+      for (const goal of state.goals.filter((g) => g.brand_id === source.id)) {
+        if (onlyActiveGoals && goal.status !== "active") continue;
+        store.updateGoal(goal.id, { brand_id: target.id });
+        movedGoals++;
+      }
+      for (const idea of state.ideas.filter((i) => i.brand_id === source.id)) {
+        store.updateIdea(idea.id, { brand_id: target.id });
+        movedOther++;
+      }
+      for (const kpi of state.kpis.filter((k) => k.brand_id === source.id)) {
+        store.updateKpi(kpi.id, { brand_id: target.id });
+        movedOther++;
+      }
+      for (const r of state.reminders.filter((r) => r.brand_id === source.id)) {
+        store.updateReminder(r.id, { brand_id: target.id });
+        movedOther++;
+      }
+      for (const p of state.playbooks.filter((p) => p.brand_id === source.id)) {
+        store.updatePlaybook(p.id, { brand_id: target.id });
+        movedOther++;
+      }
+
+      store.deleteBrand(source.id);
+
+      return {
+        action,
+        success: true,
+        message: `Merged "${source.name}" (${source.stage}) → "${target.name}" (${target.stage}): ${movedTasks} tasks, ${movedGoals} goals, ${movedOther} other items`,
+      };
+    }
+
+    case "delete_brand": {
+      const brand = resolveBrand(
+        brands(),
+        action.brand_name,
+        action.stage
+      );
+      if (!brand) {
+        throw new Error(
+          `Brand not found: "${action.brand_name}"${action.stage ? ` (${action.stage})` : ""}`
+        );
+      }
+      store.deleteBrand(brand.id);
+      return {
+        action,
+        success: true,
+        message: `Deleted brand "${brand.name}" (${brand.stage})`,
+      };
+    }
+
     case "complete_task": {
       const task = findByTitle(store.tasks, action.match_title);
       if (!task) throw new Error(`Task not found: "${action.match_title}"`);
@@ -216,7 +298,7 @@ function runAction(
         ...(action.priority && { priority: action.priority }),
         ...(action.due_date !== undefined && { due_date: action.due_date }),
         ...(action.brand_name !== undefined && {
-          brand_id: resolveBrandId(brands(), action.brand_name),
+          brand_id: brandId(brands(), action.brand_name, action.brand_stage),
         }),
       });
       return {
@@ -263,6 +345,9 @@ function runAction(
       const goal = findByTitle(store.goals, action.match_title);
       if (!goal) throw new Error(`Goal not found: "${action.match_title}"`);
       store.updateGoal(goal.id, {
+        ...(action.brand_name !== undefined && {
+          brand_id: brandId(brands(), action.brand_name, action.brand_stage),
+        }),
         ...(action.current_value !== undefined && {
           current_value: action.current_value,
         }),

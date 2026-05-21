@@ -54,6 +54,7 @@ export function buildWorkspaceContext(store: StoreSlice): WorkspaceContext {
       id: b.id,
       name: b.name,
       stage: b.stage,
+      label: `${b.name} (${b.stage})`,
     })),
     tasks: store.tasks.slice(0, 80).map((t) => ({
       id: t.id,

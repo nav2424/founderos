@@ -3,17 +3,16 @@
 import { useEffect } from "react";
 
 export function useKeyboardShortcuts(handlers: {
-  onQuickCapture?: () => void;
+  onOpenAssistant?: () => void;
   onGoDashboard?: () => void;
   onGoTasks?: () => void;
-  onOpenAssistant?: () => void;
 }) {
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       const meta = e.metaKey || e.ctrlKey;
       if (meta && e.key === "k") {
         e.preventDefault();
-        handlers.onQuickCapture?.();
+        handlers.onOpenAssistant?.();
       }
       if (meta && e.shiftKey && e.key === "D") {
         e.preventDefault();

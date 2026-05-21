@@ -106,12 +106,24 @@ export const useFounderStore = create<FounderState>()(
         const userId = get().userId;
         set((s) => ({
           brands: s.brands.filter((b) => b.id !== id),
-          tasks: s.tasks.filter((t) => t.brand_id !== id),
-          goals: s.goals.filter((g) => g.brand_id !== id),
-          ideas: s.ideas.filter((i) => i.brand_id !== id),
-          kpis: s.kpis.filter((k) => k.brand_id !== id),
-          reminders: s.reminders.filter((r) => r.brand_id !== id),
-          playbooks: s.playbooks.filter((p) => p.brand_id !== id),
+          tasks: s.tasks.map((t) =>
+            t.brand_id === id ? { ...t, brand_id: null } : t
+          ),
+          goals: s.goals.map((g) =>
+            g.brand_id === id ? { ...g, brand_id: null } : g
+          ),
+          ideas: s.ideas.map((i) =>
+            i.brand_id === id ? { ...i, brand_id: null } : i
+          ),
+          kpis: s.kpis.map((k) =>
+            k.brand_id === id ? { ...k, brand_id: null } : k
+          ),
+          reminders: s.reminders.map((r) =>
+            r.brand_id === id ? { ...r, brand_id: null } : r
+          ),
+          playbooks: s.playbooks.map((p) =>
+            p.brand_id === id ? { ...p, brand_id: null } : p
+          ),
         }));
         founderSync.brand.delete(id, userId);
       },

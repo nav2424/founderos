@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { Bot, Loader2, Send, Sparkles, X } from "lucide-react";
+import { Bot, Loader2, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -65,17 +65,29 @@ export function AiAssistant({ variant = "page", onClose }: AiAssistantProps) {
         throw new Error(data.error ?? "Request failed");
       }
 
+      const actions = Array.isArray(data.actions) ? data.actions : [];
       const results =
-        data.actions?.length > 0
-          ? executeFounderActions(data.actions)
-          : [];
+        actions.length > 0 ? executeFounderActions(actions) : [];
 
       setLastResults(results);
+
+      const executed = results.filter((r) => r.success).length;
+      const replyText = data.reply ?? "Done.";
+      const noActionsButClaimsWork =
+        actions.length === 0 &&
+        /\b(deleted|transferred|merged|created|updated|completed|moved)\b/i.test(
+          replyText
+        );
+
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: data.reply ?? "Done.",
+          content: noActionsButClaimsWork
+            ? `${replyText}\n\n⚠️ No actions were executed. Try: "merge Natural Scents Idea into Growth and delete Idea brand" or tap Send again with "do it now".`
+            : executed > 0
+              ? `${replyText}\n\n✓ ${executed} action${executed === 1 ? "" : "s"} applied.`
+              : replyText,
         },
       ]);
     } catch (e) {
@@ -105,26 +117,14 @@ export function AiAssistant({ variant = "page", onClose }: AiAssistantProps) {
   return (
     <div
       className={cn(
-        "flex flex-col bg-zinc-950",
+        "flex flex-col bg-transparent",
         isPage ? "h-[calc(100vh-8rem)] min-h-[480px]" : "h-full"
       )}
     >
-      <div
-        className={cn(
-          "flex items-center justify-between border-b border-zinc-800 px-4 py-3 shrink-0",
-          !isPage && "bg-zinc-900/80"
-        )}
-      >
+      <div className="flex h-12 shrink-0 items-center justify-between border-b border-white/[0.06] px-4">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600/20">
-            <Bot className="h-4 w-4 text-emerald-400" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-zinc-100">AI Assistant</p>
-            <p className="text-[10px] text-zinc-500">
-              Paste anything — tasks, goals, notes
-            </p>
-          </div>
+          <Bot className="h-4 w-4 text-emerald-400/80" />
+          <p className="text-sm font-medium tracking-tight text-zinc-200">AI</p>
         </div>
         {onClose && (
           <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close">
@@ -138,28 +138,24 @@ export function AiAssistant({ variant = "page", onClose }: AiAssistantProps) {
         className="flex-1 overflow-y-auto p-4 space-y-4"
       >
         {messages.length === 0 && (
-          <div className="rounded-xl border border-dashed border-zinc-800 bg-zinc-900/30 p-6 text-center">
-            <Sparkles className="h-8 w-8 text-emerald-500/60 mx-auto mb-3" />
-            <p className="text-sm text-zinc-300 font-medium">
-              Run FounderOS from chat
+          <div className="rounded-2xl border border-dashed border-white/[0.08] p-8 text-center">
+            <p className="text-sm font-medium tracking-tight text-zinc-300">
+              Command your workspace
             </p>
-            <p className="text-xs text-zinc-500 mt-2 max-w-sm mx-auto leading-relaxed">
-              Paste a brain dump, meeting notes, or say things like &quot;add
-              brand Acme, create 5 tasks for launch week, goal $50k MRR&quot;.
-              I&apos;ll create brands, tasks, goals, ideas, KPIs, reminders, and
-              more.
+            <p className="mx-auto mt-2 max-w-xs text-xs leading-relaxed text-zinc-500">
+              Paste tasks, merge brands, set goals — changes apply instantly.
             </p>
-            <div className="mt-4 flex flex-wrap gap-2 justify-center">
+            <div className="mt-5 flex flex-wrap justify-center gap-2">
               {[
-                "Create brand Vision AV and 3 launch tasks",
-                "Weekly goal: hit 10 sales calls",
-                "Remind me Friday to review finances",
+                "Add 3 tasks for this week",
+                "Merge duplicate brands",
+                "Set a monthly revenue goal",
               ].map((hint) => (
                 <button
                   key={hint}
                   type="button"
                   onClick={() => setInput(hint)}
-                  className="text-[11px] rounded-full border border-zinc-700 px-3 py-1.5 text-zinc-400 hover:border-emerald-500/40 hover:text-zinc-200 transition-colors"
+                  className="rounded-full border border-white/[0.08] px-3 py-1.5 text-[11px] text-zinc-500 transition-colors hover:border-emerald-500/25 hover:text-zinc-300"
                 >
                   {hint}
                 </button>
@@ -180,8 +176,8 @@ export function AiAssistant({ variant = "page", onClose }: AiAssistantProps) {
               className={cn(
                 "max-w-[85%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap",
                 msg.role === "user"
-                  ? "bg-emerald-600 text-white"
-                  : "bg-zinc-800/80 text-zinc-200 border border-zinc-700/50"
+                  ? "bg-emerald-600/90 text-white"
+                  : "border border-white/[0.06] bg-white/[0.03] text-zinc-300"
               )}
             >
               {msg.content}
@@ -197,9 +193,9 @@ export function AiAssistant({ variant = "page", onClose }: AiAssistantProps) {
         )}
 
         {lastResults.length > 0 && (
-          <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3 space-y-1.5">
-            <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">
-              Actions applied
+          <div className="space-y-1.5 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+            <p className="text-[10px] font-medium uppercase tracking-widest text-zinc-600">
+              Applied
             </p>
             {lastResults.map((r, i) => (
               <p
@@ -220,7 +216,7 @@ export function AiAssistant({ variant = "page", onClose }: AiAssistantProps) {
         <p className="px-4 pb-2 text-xs text-red-400">{error}</p>
       )}
 
-      <div className="shrink-0 border-t border-zinc-800 p-4 space-y-2">
+      <div className="shrink-0 space-y-2 border-t border-white/[0.06] p-4">
         <Textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
