@@ -19,19 +19,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { CALENDAR_EVENT_TYPES } from "@/lib/constants";
+import {
+  localDatetimeToStorage,
+  storageToLocalInput,
+} from "@/lib/reminder-sync";
 import type { Brand, CalendarEventType, Reminder } from "@/lib/types";
 import { useFounderStore } from "@/store/use-founder-store";
-
-function toLocalInput(iso: string | null | undefined): string {
-  if (!iso) return "";
-  try {
-    const d = new Date(iso);
-    const pad = (n: number) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  } catch {
-    return "";
-  }
-}
 
 interface EventDialogProps {
   open: boolean;
@@ -39,6 +32,7 @@ interface EventDialogProps {
   brands: Brand[];
   initialDate?: Date | null;
   editing?: Reminder | null;
+  onSaved?: (dueDateIso: string) => void;
 }
 
 export function EventDialog({
@@ -47,6 +41,7 @@ export function EventDialog({
   brands,
   initialDate,
   editing,
+  onSaved,
 }: EventDialogProps) {
   const addReminder = useFounderStore((s) => s.addReminder);
   const updateReminder = useFounderStore((s) => s.updateReminder);
@@ -60,14 +55,16 @@ export function EventDialog({
   const [meetingUrl, setMeetingUrl] = useState("");
   const [location, setLocation] = useState("");
   const [brandId, setBrandId] = useState("none");
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (open) setSaveError(null);
     if (!open) return;
     if (editing) {
       setTitle(editing.title);
       setDescription(editing.description ?? "");
-      setStart(toLocalInput(editing.due_date));
-      setEnd(toLocalInput(editing.end_date));
+      setStart(storageToLocalInput(editing.due_date));
+      setEnd(storageToLocalInput(editing.end_date));
       setEventType(editing.event_type);
       setMeetingUrl(editing.meeting_url ?? "");
       setLocation(editing.location ?? "");
@@ -92,22 +89,37 @@ export function EventDialog({
         const now = new Date();
         now.setMinutes(0, 0, 0);
         const later = new Date(now.getTime() + 3600000);
-        setStart(toLocalInput(now.toISOString()));
-        setEnd(toLocalInput(later.toISOString()));
+        setStart(storageToLocalInput(now.toISOString()));
+        setEnd(storageToLocalInput(later.toISOString()));
       }
     }
   }, [open, editing, initialDate]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!title.trim() || !start) return;
+    setSaveError(null);
+    if (!title.trim() || !start) {
+      setSaveError("Title and start time are required.");
+      return;
+    }
+
+    const dueDate = localDatetimeToStorage(start);
+    if (!dueDate) {
+      setSaveError("Invalid start date or time.");
+      return;
+    }
+    const endDate = end ? localDatetimeToStorage(end) : null;
+    if (end && !endDate) {
+      setSaveError("Invalid end date or time.");
+      return;
+    }
 
     const payload = {
       title: title.trim(),
       description: description.trim() || null,
       brand_id: brandId === "none" ? null : brandId,
-      due_date: new Date(start).toISOString(),
-      end_date: end ? new Date(end).toISOString() : null,
+      due_date: dueDate,
+      end_date: endDate,
       event_type: eventType,
       meeting_url: meetingUrl.trim() || null,
       location: location.trim() || null,
@@ -120,6 +132,7 @@ export function EventDialog({
     } else {
       addReminder(payload);
     }
+    onSaved?.(dueDate);
     onOpenChange(false);
   }
 
@@ -226,6 +239,9 @@ export function EventDialog({
               </SelectContent>
             </Select>
           </div>
+          {saveError && (
+            <p className="text-sm text-red-400">{saveError}</p>
+          )}
           <div className="flex gap-2">
             {editing && (
               <Button

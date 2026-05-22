@@ -5,9 +5,15 @@ import type { ActionResult, FounderAction } from "./types";
 import {
   GOAL_TYPES,
   IDEA_CATEGORIES,
+  KNOWLEDGE_CATEGORIES,
+  SYSTEM_LAYERS,
   TASK_PRIORITIES,
   TASK_STATUSES,
 } from "@/lib/constants";
+import type { KnowledgeCategory } from "@/lib/types";
+
+const KNOWLEDGE_CAT_VALUES = KNOWLEDGE_CATEGORIES.map((c) => c.value);
+const SYSTEM_LAYER_VALUES = SYSTEM_LAYERS.map((s) => s.value);
 
 function findByTitle<T extends { title: string }>(
   items: T[],
@@ -389,6 +395,112 @@ function runAction(
         action,
         success: true,
         message: `Deleted idea "${idea.title}"`,
+      };
+    }
+
+    case "create_knowledge": {
+      const k = store.addKnowledge({
+        title: action.title.trim(),
+        content: action.content.trim(),
+        brand_id: brandId(brands(), action.brand_name, action.brand_stage),
+        system: action.system
+          ? pickEnum(action.system, SYSTEM_LAYER_VALUES, "creator")
+          : null,
+        category: pickEnum(
+          action.category,
+          KNOWLEDGE_CAT_VALUES as readonly KnowledgeCategory[],
+          "other"
+        ),
+        tags: action.tags ?? [],
+        source: action.source ?? null,
+      });
+      return {
+        action,
+        success: true,
+        message: `Saved to memory: "${k.title}"`,
+      };
+    }
+
+    case "update_knowledge": {
+      const k = findByTitle(store.knowledge, action.match_title);
+      if (!k) throw new Error(`Memory not found: "${action.match_title}"`);
+      store.updateKnowledge(k.id, {
+        ...(action.title && { title: action.title }),
+        ...(action.content && { content: action.content }),
+        ...(action.category && {
+          category: pickEnum(
+            action.category,
+            KNOWLEDGE_CAT_VALUES as readonly KnowledgeCategory[],
+            k.category
+          ),
+        }),
+        ...(action.tags && { tags: action.tags }),
+      });
+      return {
+        action,
+        success: true,
+        message: `Updated memory "${k.title}"`,
+      };
+    }
+
+    case "delete_knowledge": {
+      const k = findByTitle(store.knowledge, action.match_title);
+      if (!k) throw new Error(`Memory not found: "${action.match_title}"`);
+      store.deleteKnowledge(k.id);
+      return {
+        action,
+        success: true,
+        message: `Deleted memory "${k.title}"`,
+      };
+    }
+
+    case "update_founder_profile": {
+      store.updateFounderProfile({
+        ...(action.priorities !== undefined && {
+          priorities: action.priorities,
+        }),
+        ...(action.focus_themes !== undefined && {
+          focus_themes: action.focus_themes,
+        }),
+        ...(action.energy_notes !== undefined && {
+          energy_notes: action.energy_notes,
+        }),
+        ...(action.strategic_goals !== undefined && {
+          strategic_goals: action.strategic_goals,
+        }),
+        ...(action.deep_work_blocks !== undefined && {
+          deep_work_blocks: action.deep_work_blocks,
+        }),
+      });
+      return {
+        action,
+        success: true,
+        message: "Updated founder profile",
+      };
+    }
+
+    case "update_brand_context": {
+      const b = resolveBrand(
+        brands(),
+        action.brand_name,
+        action.brand_stage
+      );
+      if (!b) throw new Error(`Brand not found: "${action.brand_name}"`);
+      store.updateBrand(b.id, {
+        ...(action.brief !== undefined && { brief: action.brief }),
+        ...(action.positioning !== undefined && {
+          positioning: action.positioning,
+        }),
+        ...(action.icp !== undefined && { icp: action.icp }),
+        ...(action.constraints !== undefined && {
+          constraints: action.constraints,
+        }),
+        ...(action.notes !== undefined && { notes: action.notes }),
+      });
+      return {
+        action,
+        success: true,
+        message: `Updated context for "${b.name}"`,
       };
     }
 

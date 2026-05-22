@@ -9,6 +9,7 @@ import {
   Calendar,
   CheckSquare,
   Bot,
+  Brain,
   Briefcase,
   ClipboardList,
   Sun,
@@ -21,6 +22,7 @@ import { NAV_ITEMS } from "@/lib/constants";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Bot,
+  Brain,
   Sun,
   Briefcase,
   Building2,

@@ -19,6 +19,11 @@ const ACTION_TYPES = new Set([
   "delete_idea",
   "delete_brand",
   "merge_brands",
+  "create_knowledge",
+  "update_knowledge",
+  "delete_knowledge",
+  "update_founder_profile",
+  "update_brand_context",
 ]);
 
 function extractJson(raw: string): string {

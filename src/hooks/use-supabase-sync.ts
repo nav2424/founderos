@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import {
   countItems,
+  mapRemindersFromDb,
   pushAllLocalToSupabase,
 } from "@/lib/supabase/data-sync";
 import { useFounderStore } from "@/store/use-founder-store";
@@ -13,7 +14,6 @@ import type {
   Idea,
   Kpi,
   Playbook,
-  Reminder,
   Task,
   WeeklyReview,
 } from "@/lib/types";
@@ -60,7 +60,9 @@ export function useSupabaseSync() {
         goals: (goals.data ?? []) as Goal[],
         ideas: (ideas.data ?? []) as Idea[],
         kpis: (kpis.data ?? []) as Kpi[],
-        reminders: (reminders.data ?? []) as Reminder[],
+        reminders: mapRemindersFromDb(
+          (reminders.data ?? []) as Record<string, unknown>[]
+        ),
         playbooks: (playbooks.data ?? []) as Playbook[],
         weeklyReviews: (reviews.data ?? []) as WeeklyReview[],
       };
@@ -71,6 +73,11 @@ export function useSupabaseSync() {
 
       if (remoteCount > 0) {
         hydrateFromSupabase(remote);
+        const merged = useFounderStore.getState();
+        const mergedCount = countItems(merged);
+        if (localCount > mergedCount) {
+          await pushAllLocalToSupabase(user.id, merged);
+        }
       } else if (localCount > 0) {
         await pushAllLocalToSupabase(user.id, local);
         useFounderStore.setState({ hydrated: true });

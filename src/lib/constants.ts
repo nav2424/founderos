@@ -47,8 +47,40 @@ export const CALENDAR_EVENT_TYPES = [
   { value: "deadline", label: "Deadline" },
 ] as const;
 
+export const KNOWLEDGE_CATEGORIES = [
+  { value: "decision", label: "Strategic decision" },
+  { value: "meeting_notes", label: "Meeting notes" },
+  { value: "sop", label: "SOP / process" },
+  { value: "team", label: "Team & roles" },
+  { value: "hiring", label: "Hiring plan" },
+  { value: "vendor", label: "Vendor / supplier" },
+  { value: "product", label: "Product / formula" },
+  { value: "manufacturing", label: "Manufacturing spec" },
+  { value: "packaging", label: "Packaging" },
+  { value: "brand_voice", label: "Brand voice" },
+  { value: "creator", label: "Creator agreement" },
+  { value: "retail", label: "Retail / wholesale terms" },
+  { value: "pricing", label: "Pricing" },
+  { value: "strategy", label: "Strategy" },
+  { value: "finance", label: "Finance" },
+  { value: "legal", label: "Legal" },
+  { value: "other", label: "Other" },
+] as const;
+
+export const SYSTEM_LAYERS = [
+  { value: "creator", label: "Creator program" },
+  { value: "wholesale", label: "Wholesale" },
+  { value: "manufacturing", label: "Manufacturing / R&D" },
+  { value: "content", label: "Content engine" },
+  { value: "hiring", label: "Hiring" },
+  { value: "product_dev", label: "Product development" },
+  { value: "finance", label: "Finance" },
+  { value: "partnerships", label: "Partnerships" },
+] as const;
+
 export const NAV_ITEMS = [
   { href: "/assistant", label: "AI Assistant", icon: "Bot" },
+  { href: "/memory", label: "Memory", icon: "Brain" },
   { href: "/today", label: "Today", icon: "Sun" },
   { href: "/portfolio", label: "Portfolio", icon: "Briefcase" },
   { href: "/brands", label: "Brands", icon: "Building2" },

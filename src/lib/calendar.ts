@@ -44,10 +44,14 @@ export function shiftMonth(month: Date, delta: number): Date {
 
 export function parseEventDate(iso: string): Date {
   try {
-    return parseISO(iso);
+    const d = parseISO(iso);
+    if (!Number.isNaN(d.getTime())) return d;
   } catch {
-    return startOfDay(new Date(iso));
+    /* fall through */
   }
+  const fallback = new Date(iso);
+  if (!Number.isNaN(fallback.getTime())) return fallback;
+  return startOfDay(new Date());
 }
 
 export function formatEventTime(iso: string): string {
@@ -77,6 +81,7 @@ export function buildCalendarItems(
 
   for (const r of reminders) {
     const start = parseEventDate(r.due_date);
+    if (Number.isNaN(start.getTime())) continue;
     items.push({
       id: `event-${r.id}`,
       source: "event",

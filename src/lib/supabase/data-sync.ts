@@ -1,4 +1,8 @@
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import {
+  normalizeReminderFromDb,
+  packReminderDescription,
+} from "@/lib/reminder-sync";
 import type {
   Brand,
   Goal,
@@ -166,25 +170,54 @@ export async function deleteKpi(id: string) {
 export async function upsertReminder(reminder: Reminder, userId: string) {
   const supabase = client();
   if (!supabase) return;
-  await supabase.from("reminders").upsert(
-    row(
+
+  const created = reminder.created_at ?? new Date().toISOString();
+  const fullPayload = row(
+    {
+      id: reminder.id,
+      title: reminder.title,
+      description: reminder.description,
+      brand_id: reminder.brand_id,
+      due_date: reminder.due_date,
+      end_date: reminder.end_date,
+      event_type: reminder.event_type,
+      meeting_url: reminder.meeting_url,
+      location: reminder.location,
+      repeat_frequency: reminder.repeat_frequency,
+      completed: reminder.completed,
+      created_at: created,
+    },
+    userId
+  );
+
+  const { error } = await supabase.from("reminders").upsert(fullPayload);
+
+  if (error) {
+    const legacyPayload = row(
       {
         id: reminder.id,
         title: reminder.title,
-        description: reminder.description,
+        description: packReminderDescription(reminder),
         brand_id: reminder.brand_id,
         due_date: reminder.due_date,
-        end_date: reminder.end_date,
-        event_type: reminder.event_type,
-        meeting_url: reminder.meeting_url,
-        location: reminder.location,
         repeat_frequency: reminder.repeat_frequency,
         completed: reminder.completed,
-        created_at: reminder.created_at ?? new Date().toISOString(),
+        created_at: created,
       },
       userId
-    )
-  );
+    );
+    const { error: legacyError } = await supabase
+      .from("reminders")
+      .upsert(legacyPayload);
+    if (legacyError) {
+      console.error("[founderos] reminder sync failed:", legacyError.message);
+    }
+  }
+}
+
+/** Map Supabase rows to app reminders (handles legacy schema). */
+export function mapRemindersFromDb(rows: Record<string, unknown>[]): Reminder[] {
+  return rows.map((r) => normalizeReminderFromDb(r));
 }
 
 export async function deleteReminder(id: string) {
@@ -251,6 +284,7 @@ export type LocalWorkspace = {
   reminders: Reminder[];
   playbooks: Playbook[];
   weeklyReviews: WeeklyReview[];
+  knowledge?: { id: string }[];
 };
 
 export function countItems(data: LocalWorkspace): number {
@@ -262,7 +296,8 @@ export function countItems(data: LocalWorkspace): number {
     data.kpis.length +
     data.reminders.length +
     data.playbooks.length +
-    data.weeklyReviews.length
+    data.weeklyReviews.length +
+    (data.knowledge?.length ?? 0)
   );
 }
 

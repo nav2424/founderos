@@ -16,6 +16,7 @@ import {
 import type { Reminder } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { isSameDay, startOfMonth } from "date-fns";
+import { parseEventDate } from "@/lib/calendar";
 
 export default function CalendarPage() {
   const brands = useFounderStore((s) => s.brands);
@@ -163,6 +164,11 @@ export default function CalendarPage() {
         brands={brands}
         initialDate={dialogDate}
         editing={editing}
+        onSaved={(dueDateIso) => {
+          const d = parseEventDate(dueDateIso);
+          setMonth(startOfMonth(d));
+          setSelectedDay(d);
+        }}
       />
     </AppShell>
   );

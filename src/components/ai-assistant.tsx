@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useFounderStore } from "@/store/use-founder-store";
-import { buildWorkspaceContext } from "@/lib/ai/build-context";
+import { buildFounderContext } from "@/lib/ai/build-context";
 import { executeFounderActions } from "@/lib/ai/execute-actions";
 import { hasDestructiveActions } from "@/lib/ai/destructive-actions";
 import { AiConfirmDialog } from "@/components/ai-confirm-dialog";
@@ -20,6 +20,8 @@ interface AiAssistantProps {
 export function AiAssistant({ variant = "page", onClose }: AiAssistantProps) {
   const brandCount = useFounderStore((s) => s.brands.length);
   const taskCount = useFounderStore((s) => s.tasks.length);
+  const memoryCount = useFounderStore((s) => s.knowledge.length);
+  const [lastMemoryCount, setLastMemoryCount] = useState(0);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -70,16 +72,22 @@ export function AiAssistant({ variant = "page", onClose }: AiAssistantProps) {
     setLastResults([]);
 
     const state = useFounderStore.getState();
-    const context = buildWorkspaceContext({
-      brands: state.brands,
-      tasks: state.tasks,
-      goals: state.goals,
-      ideas: state.ideas,
-      kpis: state.kpis,
-      reminders: state.reminders,
-      playbooks: state.playbooks,
-      weeklyReviews: state.weeklyReviews,
-    });
+    const context = buildFounderContext(
+      {
+        brands: state.brands,
+        tasks: state.tasks,
+        goals: state.goals,
+        ideas: state.ideas,
+        kpis: state.kpis,
+        reminders: state.reminders,
+        playbooks: state.playbooks,
+        weeklyReviews: state.weeklyReviews,
+        knowledge: state.knowledge,
+        founderProfile: state.founderProfile,
+      },
+      text
+    );
+    setLastMemoryCount(context.recalled_memory.length);
 
     try {
       const res = await fetch("/api/chat", {
@@ -179,13 +187,15 @@ export function AiAssistant({ variant = "page", onClose }: AiAssistantProps) {
               Command your workspace
             </p>
             <p className="mx-auto mt-2 max-w-xs text-xs leading-relaxed text-zinc-500">
-              Paste tasks, merge brands, set goals — changes apply instantly.
+              Outcomes, not just tasks. I recall your memory, detect bottlenecks,
+              and execute on your OS.
             </p>
             <div className="mt-5 flex flex-wrap justify-center gap-2">
               {[
-                "Add 3 tasks for this week",
-                "Merge duplicate brands",
-                "Set a monthly revenue goal",
+                "What did we decide about wholesale terms?",
+                "Paste meeting notes → save memory + tasks",
+                "Summarize STATE recovery positioning",
+                "I'm behind on MRR — what should I do this week?",
               ].map((hint) => (
                 <button
                   key={hint}
@@ -264,7 +274,14 @@ export function AiAssistant({ variant = "page", onClose }: AiAssistantProps) {
         />
         <div className="flex items-center justify-between gap-2">
           <p className="text-[10px] text-zinc-600">
-            ⌘↵ to send · {brandCount} brands · {taskCount} tasks
+            ⌘↵ send · {brandCount} brands · {taskCount} tasks · {memoryCount}{" "}
+            memories
+            {lastMemoryCount > 0 && (
+              <span className="text-emerald-500/80">
+                {" "}
+                · {lastMemoryCount} recalled
+              </span>
+            )}
           </p>
           <Button onClick={send} disabled={loading || !input.trim()} className="gap-2">
             {loading ? (

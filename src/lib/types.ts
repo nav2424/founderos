@@ -197,6 +197,67 @@ export interface WeeklyReview {
   created_at: string;
 }
 
+export type KnowledgeCategory =
+  | "sop"
+  | "team"
+  | "hiring"
+  | "vendor"
+  | "product"
+  | "manufacturing"
+  | "packaging"
+  | "brand_voice"
+  | "creator"
+  | "retail"
+  | "pricing"
+  | "meeting_notes"
+  | "decision"
+  | "strategy"
+  | "finance"
+  | "legal"
+  | "other";
+
+export type SystemLayer =
+  | "creator"
+  | "wholesale"
+  | "manufacturing"
+  | "content"
+  | "hiring"
+  | "product_dev"
+  | "finance"
+  | "partnerships";
+
+export interface KnowledgeEntry {
+  id: string;
+  user_id?: string;
+  title: string;
+  content: string;
+  brand_id: string | null;
+  system: SystemLayer | null;
+  category: KnowledgeCategory;
+  tags: string[];
+  source: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FounderProfile {
+  priorities: string | null;
+  focus_themes: string | null;
+  energy_notes: string | null;
+  strategic_goals: string | null;
+  deep_work_blocks: string | null;
+  updated_at: string | null;
+}
+
+export const DEFAULT_FOUNDER_PROFILE: FounderProfile = {
+  priorities: null,
+  focus_themes: null,
+  energy_notes: null,
+  strategic_goals: null,
+  deep_work_blocks: null,
+  updated_at: null,
+};
+
 export type QuickCaptureType = "task" | "idea" | "reminder" | "goal";
 
 export const DEFAULT_BRAND_CONTEXT = {

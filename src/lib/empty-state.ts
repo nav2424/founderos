@@ -2,8 +2,10 @@ import type {
   Brand,
   BrandFinance,
   Contact,
+  FounderProfile,
   Goal,
   Idea,
+  KnowledgeEntry,
   Kpi,
   Milestone,
   MrrEntry,
@@ -12,6 +14,7 @@ import type {
   Task,
   WeeklyReview,
 } from "./types";
+import { DEFAULT_FOUNDER_PROFILE } from "./types";
 
 export const EMPTY_FOUNDER_DATA = {
   brands: [] as Brand[],
@@ -26,4 +29,6 @@ export const EMPTY_FOUNDER_DATA = {
   milestones: [] as Milestone[],
   brandFinances: [] as BrandFinance[],
   contacts: [] as Contact[],
+  knowledge: [] as KnowledgeEntry[],
+  founderProfile: DEFAULT_FOUNDER_PROFILE as FounderProfile,
 };

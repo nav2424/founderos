@@ -7,8 +7,10 @@ import type {
   Brand,
   BrandFinance,
   Contact,
+  FounderProfile,
   Goal,
   Idea,
+  KnowledgeEntry,
   Kpi,
   Milestone,
   MrrEntry,
@@ -19,6 +21,7 @@ import type {
 } from "@/lib/types";
 import {
   DEFAULT_BRAND_CONTEXT,
+  DEFAULT_FOUNDER_PROFILE,
   DEFAULT_REMINDER_EXTRAS,
   DEFAULT_TASK_EXTRAS,
 } from "@/lib/types";
@@ -29,6 +32,7 @@ import {
   normalizeReminder,
   normalizeTask,
 } from "@/lib/normalize-persist";
+import { mergeRemoteWorkspace } from "@/lib/merge-sync";
 import { founderSync } from "@/lib/supabase/data-sync";
 import { generateId, priorityScore } from "@/lib/utils";
 
@@ -45,6 +49,8 @@ interface FounderState {
   milestones: Milestone[];
   brandFinances: BrandFinance[];
   contacts: Contact[];
+  knowledge: KnowledgeEntry[];
+  founderProfile: FounderProfile;
   hydrated: boolean;
   userId: string | null;
   lastSyncedAt: string | null;
@@ -122,6 +128,13 @@ interface FounderState {
   toggleTaskFocus: (id: string) => void;
   clearFocusTasks: () => void;
   syncMrrFromEntry: (brandId: string, amount: number) => void;
+
+  addKnowledge: (
+    entry: Omit<KnowledgeEntry, "id" | "created_at" | "updated_at">
+  ) => KnowledgeEntry;
+  updateKnowledge: (id: string, updates: Partial<KnowledgeEntry>) => void;
+  deleteKnowledge: (id: string) => void;
+  updateFounderProfile: (updates: Partial<FounderProfile>) => void;
 }
 
 export const useFounderStore = create<FounderState>()(
@@ -134,11 +147,16 @@ export const useFounderStore = create<FounderState>()(
 
       setUserId: (id) => set({ userId: id }),
 
-      hydrateFromSupabase: (data) =>
+      hydrateFromSupabase: (data) => {
+        const local = get();
         set({
-          ...data,
+          ...mergeRemoteWorkspace(local, data),
+          knowledge: local.knowledge,
+          founderProfile: local.founderProfile,
+          userId: local.userId,
           hydrated: true,
-        }),
+        });
+      },
 
       clearAllData: () => set({ ...EMPTY_FOUNDER_DATA, hydrated: true }),
 
@@ -330,6 +348,7 @@ export const useFounderStore = create<FounderState>()(
           ...DEFAULT_REMINDER_EXTRAS,
           ...reminder,
           id: generateId(),
+          created_at: reminder.created_at ?? new Date().toISOString(),
         });
         set((s) => ({ reminders: [...s.reminders, newReminder] }));
         founderSync.reminder.upsert(newReminder, get().userId);
@@ -339,7 +358,7 @@ export const useFounderStore = create<FounderState>()(
       updateReminder: (id, updates) => {
         set((s) => ({
           reminders: s.reminders.map((r) =>
-            r.id === id ? { ...r, ...updates } : r
+            r.id === id ? normalizeReminder({ ...r, ...updates }) : r
           ),
         }));
         const updated = get().reminders.find((r) => r.id === id);
@@ -507,10 +526,46 @@ export const useFounderStore = create<FounderState>()(
         set((s) => ({
           tasks: s.tasks.map((t) => ({ ...t, focus_today: false })),
         })),
+
+      addKnowledge: (entry) => {
+        const now = new Date().toISOString();
+        const k: KnowledgeEntry = {
+          ...entry,
+          id: generateId(),
+          tags: entry.tags ?? [],
+          created_at: now,
+          updated_at: now,
+        };
+        set((s) => ({ knowledge: [k, ...s.knowledge] }));
+        return k;
+      },
+
+      updateKnowledge: (id, updates) => {
+        const now = new Date().toISOString();
+        set((s) => ({
+          knowledge: s.knowledge.map((k) =>
+            k.id === id ? { ...k, ...updates, updated_at: now } : k
+          ),
+        }));
+      },
+
+      deleteKnowledge: (id) =>
+        set((s) => ({
+          knowledge: s.knowledge.filter((k) => k.id !== id),
+        })),
+
+      updateFounderProfile: (updates) =>
+        set((s) => ({
+          founderProfile: {
+            ...s.founderProfile,
+            ...updates,
+            updated_at: new Date().toISOString(),
+          },
+        })),
     }),
     {
-      name: "founderos-v3",
-      version: 4,
+      name: "founderos-v5",
+      version: 5,
       migrate: (persisted, version) => {
         const s = persisted as Record<string, unknown>;
         let state: typeof EMPTY_FOUNDER_DATA;
@@ -542,6 +597,14 @@ export const useFounderStore = create<FounderState>()(
             []
           ).map(normalizeReminder);
         }
+        if (version < 5) {
+          state.knowledge =
+            (s.knowledge as KnowledgeEntry[]) ?? state.knowledge ?? [];
+          state.founderProfile = {
+            ...DEFAULT_FOUNDER_PROFILE,
+            ...((s.founderProfile as FounderProfile) ?? {}),
+          };
+        }
         return state;
       },
       partialize: (state) => ({
@@ -557,6 +620,8 @@ export const useFounderStore = create<FounderState>()(
         milestones: state.milestones,
         brandFinances: state.brandFinances,
         contacts: state.contacts,
+        knowledge: state.knowledge,
+        founderProfile: state.founderProfile,
       }),
     }
   )

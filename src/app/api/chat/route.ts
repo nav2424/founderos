@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { ASSISTANT_SYSTEM_PROMPT } from "@/lib/ai/system-prompt";
 import { parseAssistantResponse } from "@/lib/ai/parse-response";
-import type { ChatMessage, WorkspaceContext } from "@/lib/ai/types";
+import type { ChatMessage, FounderContext } from "@/lib/ai/types";
 
 export async function POST(request: Request) {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
 
   let body: {
     messages?: ChatMessage[];
-    context?: WorkspaceContext;
+    context?: FounderContext;
   };
 
   try {
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
 
   const today = new Date().toISOString().split("T")[0];
   const contextBlock = context
-    ? `\n\nCurrent workspace (JSON):\n${JSON.stringify(context)}`
+    ? `\n\nFounderOS context (JSON — workspace + memory + operating intelligence):\n${JSON.stringify(context)}`
     : "";
 
   const openai = new OpenAI({ apiKey });
