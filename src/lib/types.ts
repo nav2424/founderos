@@ -148,6 +148,12 @@ export interface Idea {
   created_at: string;
 }
 
+export type CalendarEventType =
+  | "reminder"
+  | "meeting"
+  | "call"
+  | "deadline";
+
 export interface Reminder {
   id: string;
   user_id?: string;
@@ -155,6 +161,10 @@ export interface Reminder {
   description: string | null;
   brand_id: string | null;
   due_date: string;
+  end_date: string | null;
+  event_type: CalendarEventType;
+  meeting_url: string | null;
+  location: string | null;
   repeat_frequency: string | null;
   completed: boolean;
   created_at?: string;
@@ -202,4 +212,11 @@ export const DEFAULT_TASK_EXTRAS = {
   goal_id: null,
   recurrence: "none" as TaskRecurrence,
   focus_today: false,
+};
+
+export const DEFAULT_REMINDER_EXTRAS = {
+  end_date: null,
+  event_type: "reminder" as CalendarEventType,
+  meeting_url: null,
+  location: null,
 };

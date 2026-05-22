@@ -40,6 +40,13 @@ export const IDEA_STATUSES = [
   "Archived",
 ] as const;
 
+export const CALENDAR_EVENT_TYPES = [
+  { value: "meeting", label: "Meeting" },
+  { value: "call", label: "Call" },
+  { value: "reminder", label: "Reminder" },
+  { value: "deadline", label: "Deadline" },
+] as const;
+
 export const NAV_ITEMS = [
   { href: "/assistant", label: "AI Assistant", icon: "Bot" },
   { href: "/today", label: "Today", icon: "Sun" },

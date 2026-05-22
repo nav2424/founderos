@@ -164,16 +164,28 @@ export default function BrandDetailPage({
           {brandReminders.map((r) => (
             <div
               key={r.id}
-              className="flex justify-between rounded-lg border border-white/[0.06] px-3 py-2 text-sm"
+              className="flex justify-between gap-2 rounded-lg border border-white/[0.06] px-3 py-2 text-sm"
             >
-              <span
-                className={
-                  r.completed ? "line-through text-zinc-500" : "text-zinc-200"
-                }
-              >
-                {r.title}
-              </span>
-              <span className="text-xs text-zinc-500">
+              <div className="min-w-0">
+                <span
+                  className={
+                    r.completed ? "line-through text-zinc-500" : "text-zinc-200"
+                  }
+                >
+                  {r.title}
+                </span>
+                {r.meeting_url && (
+                  <a
+                    href={r.meeting_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-[11px] text-violet-400 hover:text-violet-300 truncate"
+                  >
+                    Join link
+                  </a>
+                )}
+              </div>
+              <span className="text-xs text-zinc-500 shrink-0">
                 {formatDate(r.due_date)}
               </span>
             </div>

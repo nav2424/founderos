@@ -49,6 +49,11 @@ create table if not exists brand_finances (
   unique (brand_id, month)
 );
 
+alter table reminders add column if not exists end_date timestamptz;
+alter table reminders add column if not exists event_type text default 'reminder';
+alter table reminders add column if not exists meeting_url text;
+alter table reminders add column if not exists location text;
+
 create table if not exists contacts (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete cascade not null,

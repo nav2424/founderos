@@ -150,6 +150,10 @@ function runAction(
         description: action.description ?? null,
         brand_id: brandId(brands(), action.brand_name, action.brand_stage),
         due_date: parseDueDate(action.due_date),
+        end_date: action.end_date ?? null,
+        event_type: action.event_type ?? "reminder",
+        meeting_url: action.meeting_url ?? null,
+        location: action.location ?? null,
         repeat_frequency: action.repeat_frequency ?? null,
         completed: false,
       });

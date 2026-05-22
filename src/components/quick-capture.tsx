@@ -101,6 +101,10 @@ export function QuickCapture({ open, onOpenChange }: QuickCaptureProps) {
           description: description || null,
           brand_id: bid,
           due_date: new Date(Date.now() + 86400000).toISOString(),
+          end_date: null,
+          event_type: "reminder",
+          meeting_url: null,
+          location: null,
           repeat_frequency: null,
           completed: false,
         });

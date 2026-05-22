@@ -17,9 +17,18 @@ import type {
   Task,
   WeeklyReview,
 } from "@/lib/types";
-import { DEFAULT_BRAND_CONTEXT, DEFAULT_TASK_EXTRAS } from "@/lib/types";
+import {
+  DEFAULT_BRAND_CONTEXT,
+  DEFAULT_REMINDER_EXTRAS,
+  DEFAULT_TASK_EXTRAS,
+} from "@/lib/types";
 import { isMrrGoal } from "@/lib/goals";
-import { normalizeBrand, normalizeGoal, normalizeTask } from "@/lib/normalize-persist";
+import {
+  normalizeBrand,
+  normalizeGoal,
+  normalizeReminder,
+  normalizeTask,
+} from "@/lib/normalize-persist";
 import { founderSync } from "@/lib/supabase/data-sync";
 import { generateId, priorityScore } from "@/lib/utils";
 
@@ -317,7 +326,11 @@ export const useFounderStore = create<FounderState>()(
       },
 
       addReminder: (reminder) => {
-        const newReminder: Reminder = { ...reminder, id: generateId() };
+        const newReminder: Reminder = normalizeReminder({
+          ...DEFAULT_REMINDER_EXTRAS,
+          ...reminder,
+          id: generateId(),
+        });
         set((s) => ({ reminders: [...s.reminders, newReminder] }));
         founderSync.reminder.upsert(newReminder, get().userId);
         return newReminder;
@@ -497,24 +510,39 @@ export const useFounderStore = create<FounderState>()(
     }),
     {
       name: "founderos-v3",
-      version: 3,
+      version: 4,
       migrate: (persisted, version) => {
         const s = persisted as Record<string, unknown>;
+        let state: typeof EMPTY_FOUNDER_DATA;
         if (version < 3) {
-          return {
+          state = {
             ...EMPTY_FOUNDER_DATA,
             brands: ((s.brands as Brand[]) ?? []).map(normalizeBrand),
             tasks: ((s.tasks as Task[]) ?? []).map(normalizeTask),
             goals: ((s.goals as Goal[]) ?? []).map(normalizeGoal),
             ideas: (s.ideas as typeof EMPTY_FOUNDER_DATA.ideas) ?? [],
             kpis: (s.kpis as typeof EMPTY_FOUNDER_DATA.kpis) ?? [],
-            reminders: (s.reminders as typeof EMPTY_FOUNDER_DATA.reminders) ?? [],
+            reminders: ((s.reminders as Reminder[]) ?? []).map(
+              normalizeReminder
+            ),
             playbooks: (s.playbooks as typeof EMPTY_FOUNDER_DATA.playbooks) ?? [],
             weeklyReviews:
               (s.weeklyReviews as typeof EMPTY_FOUNDER_DATA.weeklyReviews) ?? [],
           };
+        } else {
+          state = {
+            ...EMPTY_FOUNDER_DATA,
+            ...(persisted as typeof EMPTY_FOUNDER_DATA),
+          };
         }
-        return persisted as typeof EMPTY_FOUNDER_DATA;
+        if (version < 4) {
+          state.reminders = (
+            (s.reminders as Reminder[]) ??
+            state.reminders ??
+            []
+          ).map(normalizeReminder);
+        }
+        return state;
       },
       partialize: (state) => ({
         brands: state.brands,

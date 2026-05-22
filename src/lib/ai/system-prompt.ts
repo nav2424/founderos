@@ -23,7 +23,7 @@ CREATE:
   Example MRR: { "type": "create_goal", "title": "Hit $50k MRR", "brand_name": "Acme", "goal_type": "Yearly", "target_metric": "MRR", "current_value": 12000, "target_value": 50000, "deadline": "2026-12-31" }
 - create_idea: { title, description?, brand_name?, brand_stage?, category?, status?, estimated_impact?, effort_level? }
 - create_kpi: { name, brand_name?, brand_stage?, value?, target_value?, period?, date?, notes? }
-- create_reminder: { title, description?, brand_name?, brand_stage?, due_date?, repeat_frequency? }
+- create_reminder: { title, description?, brand_name?, brand_stage?, due_date?, end_date?, event_type? (meeting|call|reminder|deadline), meeting_url? (Zoom/Meet link), location?, repeat_frequency? }
 - create_playbook: { title, brand_name?, brand_stage?, category?, content? }
 - create_weekly_review: { week_start?, wins?, losses?, lessons?, priorities_next_week?, bottlenecks?, avoided?, moved_forward?, stop_doing?, delegate_later? }
 

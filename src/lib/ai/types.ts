@@ -117,6 +117,10 @@ export type FounderAction =
       brand_name?: string | null;
       brand_stage?: string | null;
       due_date?: string;
+      end_date?: string | null;
+      event_type?: "reminder" | "meeting" | "call" | "deadline";
+      meeting_url?: string | null;
+      location?: string | null;
       repeat_frequency?: string | null;
     }
   | {
