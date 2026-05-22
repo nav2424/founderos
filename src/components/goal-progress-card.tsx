@@ -1,5 +1,6 @@
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { goalProgress, formatDate } from "@/lib/utils";
 import {
   daysUntilDeadline,
@@ -12,9 +13,10 @@ import { cn } from "@/lib/utils";
 
 interface GoalProgressCardProps {
   goal: Goal;
+  onMarkDone?: () => void;
 }
 
-export function GoalProgressCard({ goal }: GoalProgressCardProps) {
+export function GoalProgressCard({ goal, onMarkDone }: GoalProgressCardProps) {
   const brands = useFounderStore((s) => s.brands);
   const brand = brands.find((b) => b.id === goal.brand_id);
   const progress = goalProgress(goal.current_value, goal.target_value);
@@ -22,21 +24,41 @@ export function GoalProgressCard({ goal }: GoalProgressCardProps) {
 
   return (
     <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-zinc-200">{goal.title}</p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-zinc-200 pr-1">{goal.title}</p>
           {brand && (
             <p className="text-xs text-zinc-500 mt-0.5">{brand.name}</p>
           )}
         </div>
-        <div className="flex shrink-0 flex-col items-end gap-1">
+        {goal.status === "active" && onMarkDone && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="shrink-0 h-7 text-[10px] text-zinc-500 hover:text-zinc-200"
+            onClick={onMarkDone}
+          >
+            Done
+          </Button>
+        )}
+      </div>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        <Badge variant="outline" className="text-[10px]">
+          {goalHorizonLabel(goal.type)}
+        </Badge>
+        <Badge variant="secondary" className="text-[10px]">
+          {goal.type}
+        </Badge>
+        {goal.target_metric && (
           <Badge variant="outline" className="text-[10px]">
-            {goalHorizonLabel(goal.type)}
+            {goal.target_metric}
           </Badge>
-          <Badge variant="secondary" className="text-[10px]">
-            {goal.type}
+        )}
+        {goal.status === "completed" && (
+          <Badge className="text-[10px] bg-emerald-500/15 text-emerald-400 border-emerald-500/20">
+            Completed
           </Badge>
-        </div>
+        )}
       </div>
       <div className="mt-3">
         <div className="flex justify-between text-xs text-zinc-500 mb-1.5">

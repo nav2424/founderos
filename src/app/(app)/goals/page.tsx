@@ -64,19 +64,15 @@ export default function GoalsPage() {
         </p>
         <div className="grid gap-3 sm:grid-cols-2">
           {longTerm.map((goal) => (
-            <div key={goal.id} className="relative">
-              <GoalProgressCard goal={goal} />
-              {goal.status === "active" && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute top-2 right-2 text-[10px] h-7"
-                  onClick={() => updateGoal(goal.id, { status: "completed" })}
-                >
-                  Done
-                </Button>
-              )}
-            </div>
+            <GoalProgressCard
+              key={goal.id}
+              goal={goal}
+              onMarkDone={
+                goal.status === "active"
+                  ? () => updateGoal(goal.id, { status: "completed" })
+                  : undefined
+              }
+            />
           ))}
         </div>
         {longTerm.length === 0 && (
@@ -95,19 +91,15 @@ export default function GoalsPage() {
         </p>
         <div className="grid gap-3 sm:grid-cols-2">
           {shortTerm.map((goal) => (
-            <div key={goal.id} className="relative">
-              <GoalProgressCard goal={goal} />
-              {goal.status === "active" && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute top-2 right-2 text-[10px] h-7"
-                  onClick={() => updateGoal(goal.id, { status: "completed" })}
-                >
-                  Done
-                </Button>
-              )}
-            </div>
+            <GoalProgressCard
+              key={goal.id}
+              goal={goal}
+              onMarkDone={
+                goal.status === "active"
+                  ? () => updateGoal(goal.id, { status: "completed" })
+                  : undefined
+              }
+            />
           ))}
         </div>
         {shortTerm.length === 0 && (
